@@ -37,7 +37,15 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+
+#ifdef GLES3_ENABLED
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
+#endif
+
+#ifdef GLES2_ENABLED
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#endif
 
 #endif // PLATFORM_GL_H

@@ -31,7 +31,7 @@
 #ifndef WGL_DETECT_VERSION_H
 #define WGL_DETECT_VERSION_H
 
-#if defined(WINDOWS_ENABLED) && defined(GLES3_ENABLED)
+#if defined(WINDOWS_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 class Dictionary;
 

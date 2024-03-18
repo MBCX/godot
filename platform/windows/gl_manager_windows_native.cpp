@@ -30,7 +30,7 @@
 
 #include "gl_manager_windows_native.h"
 
-#if defined(WINDOWS_ENABLED) && defined(GLES3_ENABLED)
+#if defined(WINDOWS_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include "core/config/project_settings.h"
 #include "core/version.h"
@@ -47,6 +47,7 @@
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
 
 #define _WGL_CONTEXT_DEBUG_BIT_ARB 0x0001
 
@@ -382,11 +383,13 @@ Error GLManagerNative_Windows::_create_context(GLWindow &win, GLDisplay &gl_disp
 		ERR_PRINT("Could not attach OpenGL context to newly created window: " + format_error_message(GetLastError()));
 	}
 
+	int context_profile = _use_gles3 ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+
 	int attribs[] = {
 		WGL_CONTEXT_MAJOR_VERSION_ARB, 3, //we want a 3.3 context
 		WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 		//and it shall be forward compatible so that we can only use up to date functionality
-		WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		WGL_CONTEXT_PROFILE_MASK_ARB, context_profile,
 		WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB /*| _WGL_CONTEXT_DEBUG_BIT_ARB*/,
 		0
 	}; //zero indicates the end of the array
@@ -544,7 +547,8 @@ HGLRC GLManagerNative_Windows::get_hglrc(DisplayServer::WindowID p_window_id) {
 	return disp.hRC;
 }
 
-GLManagerNative_Windows::GLManagerNative_Windows() {
+GLManagerNative_Windows::GLManagerNative_Windows(bool gles3) {
+	_use_gles3 = gles3;
 	direct_render = false;
 	glx_minor = glx_major = 0;
 	_current_window = nullptr;

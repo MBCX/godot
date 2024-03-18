@@ -32,7 +32,7 @@
 
 #ifdef WAYLAND_ENABLED
 #ifdef EGL_ENABLED
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 
 const char *EGLManagerWayland::_get_platform_extension_name() const {
 	return "EGL_KHR_platform_wayland";
@@ -56,11 +56,15 @@ Vector<EGLint> EGLManagerWayland::_get_platform_context_attribs() const {
 	ret.push_back(3);
 	ret.push_back(EGL_CONTEXT_MINOR_VERSION);
 	ret.push_back(3);
+	if (!use_gles3) {
+		ret.push_back(EGL_CONTEXT_OPENGL_PROFILE_MASK);
+		ret.push_back(EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT);
+	}
 	ret.push_back(EGL_NONE);
 
 	return ret;
 }
 
-#endif // GLES3_ENABLED
+#endif // GLES3_ENABLED || GLES2_ENABLED
 #endif // EGL_ENABLED
 #endif // WAYLAND_ENABLED

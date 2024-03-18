@@ -33,20 +33,26 @@
 
 #ifdef WAYLAND_ENABLED
 #ifdef EGL_ENABLED
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 
 #include "drivers/egl/egl_manager.h"
 
 class EGLManagerWayland : public EGLManager {
+private:
+	bool use_gles3;
+
 public:
 	virtual const char *_get_platform_extension_name() const override;
 	virtual EGLenum _get_platform_extension_enum() const override;
 	virtual EGLenum _get_platform_api_enum() const override;
 	virtual Vector<EGLAttrib> _get_platform_display_attributes() const override;
 	virtual Vector<EGLint> _get_platform_context_attribs() const override;
+
+	GLManagerEGL_X11(bool p_use_gles3 = true) :
+			use_gles3(p_use_gles3){};
 };
 
-#endif // GLES3_ENABLED
+#endif // GLES3_ENABLED || GLES2_ENABLED
 #endif // EGL_ENABLED
 #endif // WAYLAND_ENABLED
 

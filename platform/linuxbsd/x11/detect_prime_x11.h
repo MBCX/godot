@@ -31,10 +31,10 @@
 #ifndef DETECT_PRIME_X11_H
 #define DETECT_PRIME_X11_H
 
-#if defined(X11_ENABLED) && defined(GLES3_ENABLED)
+#if defined(X11_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
-int detect_prime();
+int detect_prime(bool p_gles3_enabled = true);
 
-#endif // X11_ENABLED && GLES3_ENABLED
+#endif // X11_ENABLED && (GLES3_ENABLED || GLES2_ENABLED)
 
 #endif // DETECT_PRIME_X11_H

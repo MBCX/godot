@@ -582,8 +582,12 @@ def configure_msvc(env: "SConsEnvironment", vcvars_msvc_config):
         env.Append(LIBPATH=[env["mesa_libs"] + "/bin"])
         LIBS += ["libNIR.windows." + env["arch"] + prebuilt_lib_extra_suffix]
 
+    if env["opengl2"]:
+        env.AppendUnique(CPPDEFINES=["GLES2_ENABLED"])
     if env["opengl3"]:
         env.AppendUnique(CPPDEFINES=["GLES3_ENABLED"])
+
+    if env["opengl2"] or env["opengl3"]:
         if env["angle_libs"] != "":
             env.AppendUnique(CPPDEFINES=["EGL_STATIC"])
             env.Append(LIBPATH=[env["angle_libs"]])
@@ -912,8 +916,12 @@ def configure_mingw(env: "SConsEnvironment"):
         env.Append(LIBS=["libNIR.windows." + env["arch"]])
         env.Append(LIBS=["version"])  # Mesa dependency.
 
+    if env["opengl2"]:
+        env.Append(CPPDEFINES=["GLES2_ENABLED"])
     if env["opengl3"]:
         env.Append(CPPDEFINES=["GLES3_ENABLED"])
+
+    if env["opengl2"] or env["opengl3"]:
         if env["angle_libs"] != "":
             env.AppendUnique(CPPDEFINES=["EGL_STATIC"])
             env.Append(LIBPATH=[env["angle_libs"]])

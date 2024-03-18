@@ -31,7 +31,7 @@
 #ifndef GL_MANAGER_WINDOWS_NATIVE_H
 #define GL_MANAGER_WINDOWS_NATIVE_H
 
-#if defined(WINDOWS_ENABLED) && defined(GLES3_ENABLED)
+#if defined(WINDOWS_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include "core/error/error_list.h"
 #include "core/os/os.h"
@@ -60,6 +60,7 @@ private:
 		// windows specific
 		HGLRC hRC;
 	};
+	bool _use_gles3;
 
 	RBMap<DisplayServer::WindowID, GLWindow> _windows;
 	LocalVector<GLDisplay> _displays;
@@ -100,10 +101,10 @@ public:
 	HDC get_hdc(DisplayServer::WindowID p_window_id);
 	HGLRC get_hglrc(DisplayServer::WindowID p_window_id);
 
-	GLManagerNative_Windows();
+	GLManagerNative_Windows(bool gles3 = true);
 	~GLManagerNative_Windows();
 };
 
-#endif // WINDOWS_ENABLED && GLES3_ENABLED
+#endif // WINDOWS_ENABLED && (GLES3_ENABLED || GLES2_ENABLED)
 
 #endif // GL_MANAGER_WINDOWS_NATIVE_H

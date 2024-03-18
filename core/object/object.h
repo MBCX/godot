@@ -563,12 +563,16 @@ private:
 
 class ScriptInstance;
 
+#ifdef CONNECT_DEFERRED
+#undef CONNECT_DEFERRED
+#endif
+
 class Object {
 public:
 	typedef Object self_type;
 
 	enum ConnectFlags {
-		CONNECT_DEFERRED = 1,
+		CONNECT_DEFERRED = 1, // this conflicts with the windows api, typedefs.h should fix that
 		CONNECT_PERSIST = 2, // hint for scene to save this connection
 		CONNECT_ONE_SHOT = 4,
 		CONNECT_REFERENCE_COUNTED = 8,

@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#if defined(X11_ENABLED) && defined(GLES3_ENABLED)
+#if defined(X11_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include "detect_prime_x11.h"
 
@@ -78,7 +78,7 @@ vendor vendormap[] = {
 };
 
 // Runs inside a child. Exiting will not quit the engine.
-void create_context() {
+void create_context(bool p_gles3_enabled) {
 	Display *x11_display = XOpenDisplay(nullptr);
 	Window x11_window;
 	GLXContext glx_context;
@@ -116,10 +116,11 @@ void create_context() {
 
 	fbconfig = fbc[0];
 
+	int context_profile = p_gles3_enabled ? GLX_CONTEXT_CORE_PROFILE_BIT_ARB : GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
 	static int context_attribs[] = {
 		GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
 		GLX_CONTEXT_MINOR_VERSION_ARB, 3,
-		GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+		GLX_CONTEXT_PROFILE_MASK_ARB, context_profile,
 		GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 		None
 	};
@@ -150,7 +151,7 @@ int silent_error_handler(Display *display, XErrorEvent *error) {
 	return 0;
 }
 
-int detect_prime() {
+int detect_prime(bool p_gles3_enabled) {
 	pid_t p;
 	int priorities[2] = {};
 	String vendors[2];
@@ -212,7 +213,7 @@ int detect_prime() {
 				setenv("DRI_PRIME", "1", 1);
 			}
 
-			create_context();
+			create_context(p_gles3_enabled);
 
 			PFNGLGETSTRINGPROC glGetString = (PFNGLGETSTRINGPROC)glXGetProcAddressARB((GLubyte *)"glGetString");
 			if (!glGetString) {
@@ -276,4 +277,4 @@ int detect_prime() {
 	return preferred;
 }
 
-#endif // X11_ENABLED && GLES3_ENABLED
+#endif // X11_ENABLED && (GLES3_ENABLED || GLES2_ENABLED)

@@ -8,7 +8,7 @@ from gles3_builders import GLES3HeaderStruct, build_gles3_header
 @pytest.mark.parametrize(
     ["shader_files", "builder", "header_struct"],
     [
-        ("gles3/vertex_fragment", build_gles3_header, GLES3HeaderStruct),
+        ("gles3/vertex_fragment", build_gles_header, GLESHeaderStruct),
     ],
     indirect=["shader_files"],
 )

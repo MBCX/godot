@@ -1989,14 +1989,22 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	{
-		String driver_hints = "";
-		String driver_hints_angle = "";
-		String driver_hints_egl = "";
+		Vector<String> driver_hints_arr;
+		Vector<String> driver_hints_angle_arr;
+		Vector<String> driver_hints_egl_arr;
 #ifdef GLES3_ENABLED
-		driver_hints = "opengl3";
-		driver_hints_angle = "opengl3,opengl3_angle"; // macOS, Windows.
-		driver_hints_egl = "opengl3,opengl3_es"; // Linux.
+		driver_hints_arr.push_back("opengl3");
+		driver_hints_angle_arr.push_back("opengl3,opengl3_angle"); // macOS, Windows.
+		driver_hints_egl_arr.push_back("opengl3,opengl3_es"); // Linux.
 #endif
+#ifdef GLES2_ENABLED
+		driver_hints_arr.push_back("opengl2");
+		driver_hints_angle_arr.push_back("opengl2,opengl2_angle"); // macOS, Windows.
+		driver_hints_egl_arr.push_back("opengl2,opengl2_es"); // Linux.
+#endif
+		String driver_hints = String(",").join(driver_hints_arr);
+		String driver_hints_angle = String(",").join(driver_hints_angle_arr);
+		String driver_hints_egl = String(",").join(driver_hints_egl_arr);
 
 		String default_driver = driver_hints.get_slice(",", 0);
 
@@ -2176,7 +2184,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 #endif
 
 	// And Compatibility next, or first if Vulkan is disabled.
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (!renderer_hints.is_empty()) {
 		renderer_hints += ",";
 	}
@@ -2186,7 +2194,11 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 	// Default to Compatibility when using the project manager.
 	if (rendering_driver.is_empty() && rendering_method.is_empty() && project_manager) {
+#if defined(GLES3_ENABLED)
 		rendering_driver = "opengl3";
+#elif
+		rendering_driver = "opengl2";
+#endif
 		rendering_method = "gl_compatibility";
 		default_renderer_mobile = "gl_compatibility";
 	}
@@ -2266,7 +2278,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 		// Set a default renderer if none selected. Try to choose one that matches the driver.
 		if (rendering_method.is_empty()) {
-			if (rendering_driver == "opengl3" || rendering_driver == "opengl3_angle" || rendering_driver == "opengl3_es") {
+			if (rendering_driver == "opengl3" || rendering_driver == "opengl3_angle" || rendering_driver == "opengl3_es" ||
+					rendering_driver == "opengl2" || rendering_driver == "opengl2_angle" || rendering_driver == "opengl2_es") {
 				rendering_method = "gl_compatibility";
 			} else {
 				rendering_method = "forward_plus";
@@ -2287,11 +2300,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			available_drivers.push_back("metal");
 #endif
 		}
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		if (rendering_method == "gl_compatibility") {
 			available_drivers.push_back("opengl3");
 			available_drivers.push_back("opengl3_angle");
 			available_drivers.push_back("opengl3_es");
+			available_drivers.push_back("opengl2");
+			available_drivers.push_back("opengl2_angle");
+			available_drivers.push_back("opengl2_es");
 		}
 #endif
 		if (available_drivers.is_empty()) {

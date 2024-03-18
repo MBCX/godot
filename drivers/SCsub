@@ -29,6 +29,11 @@ SConscript("coremidi/SCsub")
 SConscript("winmidi/SCsub")
 
 # Graphics drivers
+print("test print:")
+print(env["opengl2"])
+print(env["opengl3"])
+print(env["vulkan"])
+
 if env["vulkan"]:
     SConscript("vulkan/SCsub")
 if env["d3d12"]:
@@ -36,10 +41,14 @@ if env["d3d12"]:
         print("Target platform '{}' does not support the D3D12 rendering driver. Aborting.".format(env["platform"]))
         Exit(255)
     SConscript("d3d12/SCsub")
-if env["opengl3"]:
+if env["opengl3"] or env["opengl2"]:
     SConscript("gl_context/SCsub")
-    SConscript("gles3/SCsub")
+    SConscript("gles_common/SCsub")
     SConscript("egl/SCsub")
+    if env["opengl2"]:
+        SConscript("gles2/SCsub")
+    if env["opengl3"]:
+        SConscript("gles3/SCsub")
 if env["metal"]:
     if "metal" not in supported:
         print("Target platform '{}' does not support the Metal rendering driver. Aborting.".format(env["platform"]))

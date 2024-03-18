@@ -50,6 +50,10 @@
 #include "drivers/gles3/rasterizer_gles3.h"
 #endif
 
+#if defined(GLES2_ENABLED)
+#include "drivers/gles2/rasterizer_gles2.h"
+#endif
+
 #include <avrt.h>
 #include <dwmapi.h>
 #include <propkey.h>
@@ -1591,7 +1595,7 @@ void DisplayServerWindows::delete_sub_window(WindowID p_window) {
 		rendering_context->window_destroy(p_window);
 	}
 #endif
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager_angle) {
 		gl_manager_angle->window_destroy(p_window);
 	}
@@ -1613,7 +1617,7 @@ void DisplayServerWindows::delete_sub_window(WindowID p_window) {
 }
 
 void DisplayServerWindows::gl_window_make_current(DisplayServer::WindowID p_window_id) {
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager_angle) {
 		gl_manager_angle->window_make_current(p_window_id);
 	}
@@ -1632,7 +1636,7 @@ int64_t DisplayServerWindows::window_get_native_handle(HandleType p_handle_type,
 		case WINDOW_HANDLE: {
 			return (int64_t)windows[p_window].hWnd;
 		}
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		case WINDOW_VIEW: {
 			if (gl_manager_native) {
 				return (int64_t)gl_manager_native->get_hdc(p_window);
@@ -2013,6 +2017,24 @@ void DisplayServerWindows::window_set_size(const Size2i p_size, WindowID p_windo
 
 	int w = p_size.width;
 	int h = p_size.height;
+
+	wd.width = w;
+	wd.height = h;
+
+#if defined(RD_ENABLED)
+	if (rendering_context) {
+		rendering_context->window_set_size(p_window, w, h);
+	}
+#endif
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
+	if (gl_manager_native) {
+		gl_manager_native->window_resize(p_window, w, h);
+	}
+	if (gl_manager_angle) {
+		gl_manager_angle->window_resize(p_window, w, h);
+	}
+#endif
+
 	RECT rect;
 	GetWindowRect(wd.hWnd, &rect);
 
@@ -3220,7 +3242,7 @@ void DisplayServerWindows::release_rendering_thread() {
 }
 
 void DisplayServerWindows::swap_buffers() {
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager_angle) {
 		gl_manager_angle->swap_buffers();
 	}
@@ -3593,7 +3615,7 @@ void DisplayServerWindows::window_set_vsync_mode(DisplayServer::VSyncMode p_vsyn
 	}
 #endif
 
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager_native) {
 		gl_manager_native->set_use_vsync(p_window, p_vsync_mode != DisplayServer::VSYNC_DISABLED);
 	}
@@ -3611,7 +3633,7 @@ DisplayServer::VSyncMode DisplayServerWindows::window_get_vsync_mode(WindowID p_
 	}
 #endif
 
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager_native) {
 		return gl_manager_native->is_using_vsync(p_window) ? DisplayServer::VSYNC_ENABLED : DisplayServer::VSYNC_DISABLED;
 	}
@@ -3644,9 +3666,9 @@ bool DisplayServerWindows::is_window_transparency_available() const {
 #define SIGNATURE_MASK 0xFFFFFF00
 // Keeping the name suggested by Microsoft, but this macro really answers:
 // Is this mouse event emulated from touch or pen input?
-#define IsPenEvent(dw) (((dw) & SIGNATURE_MASK) == MI_WP_SIGNATURE)
+#define IsPenEvent(dw) (((dw)&SIGNATURE_MASK) == MI_WP_SIGNATURE)
 // This one tells whether the event comes from touchscreen (and not from pen).
-#define IsTouchEvent(dw) (IsPenEvent(dw) && ((dw) & 0x80))
+#define IsTouchEvent(dw) (IsPenEvent(dw) && ((dw)&0x80))
 
 void DisplayServerWindows::_touch_event(WindowID p_window, bool p_pressed, float p_x, float p_y, int idx) {
 	if (touch_state.has(idx) == p_pressed) {
@@ -5670,7 +5692,7 @@ DisplayServer::WindowID DisplayServerWindows::_create_window(WindowMode p_mode, 
 		}
 #endif
 
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		if (gl_manager_native) {
 			if (gl_manager_native->window_create(id, wd.hWnd, hInstance, real_client_rect.right - real_client_rect.left, real_client_rect.bottom - real_client_rect.top) != OK) {
 				memdelete(gl_manager_native);
@@ -6295,6 +6317,33 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 		RasterizerGLES3::make_current(false);
 	}
 #endif
+#ifdef GLES2_ENABLED
+	if (rendering_driver == "opengl2") {
+		//we create a 3.3 context, because at least in my testing using 2.0 on windows sucks.
+		gl_manager_native = memnew(GLManagerNative_Windows(false));
+
+		if (gl_manager_native->initialize() != OK) {
+			memdelete(gl_manager_native);
+			gl_manager_native = nullptr;
+			r_error = ERR_UNAVAILABLE;
+			return;
+		}
+
+		RasterizerGLES2::make_current(true);
+	}
+	if (rendering_driver == "opengl2_angle") {
+		gl_manager_angle = memnew(GLManagerANGLE_Windows(false));
+
+		if (gl_manager_angle->initialize() != OK) {
+			memdelete(gl_manager_angle);
+			gl_manager_angle = nullptr;
+			r_error = ERR_UNAVAILABLE;
+			return;
+		}
+
+		RasterizerGLES2::make_current(false);
+	}
+#endif
 	String appname;
 	if (Engine::get_singleton()->is_editor_hint()) {
 		appname = "Godot.GodotEditor." + String(VERSION_FULL_CONFIG);
@@ -6409,6 +6458,10 @@ Vector<String> DisplayServerWindows::get_rendering_drivers_func() {
 	drivers.push_back("opengl3");
 	drivers.push_back("opengl3_angle");
 #endif
+#ifdef GLES2_ENABLED
+	drivers.push_back("opengl2");
+	drivers.push_back("opengl2_angle");
+#endif
 
 	return drivers;
 }
@@ -6508,7 +6561,7 @@ DisplayServerWindows::~DisplayServerWindows() {
 		native_menu = nullptr;
 	}
 
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	// destroy windows .. NYI?
 	// FIXME wglDeleteContext is never called
 #endif
@@ -6545,7 +6598,7 @@ DisplayServerWindows::~DisplayServerWindows() {
 	if (restore_mouse_trails > 1) {
 		SystemParametersInfoA(SPI_SETMOUSETRAILS, restore_mouse_trails, nullptr, 0);
 	}
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager_angle) {
 		memdelete(gl_manager_angle);
 		gl_manager_angle = nullptr;

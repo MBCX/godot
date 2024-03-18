@@ -46,6 +46,9 @@
 #include "servers/rendering/renderer_rd/renderer_compositor_rd.h"
 #endif
 
+#if defined(GLES2_ENABLED)
+#include "drivers/gles2/rasterizer_gles2.h"
+#endif
 #if defined(GLES3_ENABLED)
 #include "drivers/gles3/rasterizer_gles3.h"
 #endif
@@ -1810,7 +1813,7 @@ void DisplayServerX11::delete_sub_window(WindowID p_id) {
 		rendering_context->window_destroy(p_id);
 	}
 #endif
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->window_destroy(p_id);
 	}
@@ -1851,7 +1854,7 @@ int64_t DisplayServerX11::window_get_native_handle(HandleType p_handle_type, Win
 		case WINDOW_VIEW: {
 			return 0; // Not supported.
 		}
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		case OPENGL_CONTEXT: {
 			if (gl_manager) {
 				return (int64_t)gl_manager->get_glx_context(p_window);
@@ -2032,7 +2035,7 @@ int DisplayServerX11::window_get_current_screen(WindowID p_window) const {
 }
 
 void DisplayServerX11::gl_window_make_current(DisplayServer::WindowID p_window_id) {
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->window_make_current(p_window_id);
 	}
@@ -2334,7 +2337,7 @@ void DisplayServerX11::window_set_size(const Size2i p_size, WindowID p_window) {
 		rendering_context->window_set_size(p_window, xwa.width, xwa.height);
 	}
 #endif
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->window_resize(p_window, xwa.width, xwa.height);
 	}
@@ -4012,7 +4015,7 @@ void DisplayServerX11::_window_changed(XEvent *event) {
 		rendering_context->window_set_size(window_id, wd.size.width, wd.size.height);
 	}
 #endif
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->window_resize(window_id, wd.size.width, wd.size.height);
 	}
@@ -5200,7 +5203,7 @@ void DisplayServerX11::process_events() {
 }
 
 void DisplayServerX11::release_rendering_thread() {
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->release_current();
 	}
@@ -5210,8 +5213,19 @@ void DisplayServerX11::release_rendering_thread() {
 #endif
 }
 
+void DisplayServerX11::make_rendering_thread() {
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
+	if (gl_manager) {
+		gl_manager->make_current();
+	}
+	if (gl_manager_egl) {
+		gl_manager_egl->make_current();
+	}
+#endif
+}
+
 void DisplayServerX11::swap_buffers() {
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->swap_buffers();
 	}
@@ -5384,7 +5398,7 @@ void DisplayServerX11::window_set_vsync_mode(DisplayServer::VSyncMode p_vsync_mo
 	}
 #endif
 
-#if defined(GLES3_ENABLED)
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		gl_manager->set_use_vsync(p_vsync_mode != DisplayServer::VSYNC_DISABLED);
 	}
@@ -5422,6 +5436,10 @@ Vector<String> DisplayServerX11::get_rendering_drivers_func() {
 	drivers.push_back("opengl3");
 	drivers.push_back("opengl3_es");
 #endif
+#ifdef GLES2_ENABLED
+	drivers.push_back("opengl2");
+	drivers.push_back("opengl2_es");
+#endif
 
 	return drivers;
 }
@@ -5437,7 +5455,7 @@ DisplayServerX11::WindowID DisplayServerX11::_create_window(WindowMode p_mode, V
 	XVisualInfo visualInfo;
 	bool vi_selected = false;
 
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		Error err;
 		visualInfo = gl_manager->get_vi(x11_display, err);
@@ -5740,7 +5758,7 @@ DisplayServerX11::WindowID DisplayServerX11::_create_window(WindowMode p_mode, V
 			rendering_context->window_set_vsync_mode(id, p_vsync_mode);
 		}
 #endif
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		if (gl_manager) {
 			Error err = gl_manager->window_create(id, wd.x11_window, x11_display, win_rect.size.width, win_rect.size.height);
 			ERR_FAIL_COND_V_MSG(err != OK, INVALID_WINDOW_ID, "Can't create an OpenGL window");
@@ -6208,7 +6226,7 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 
 			if (use_prime == -1) {
 				print_verbose("Detecting GPUs, set DRI_PRIME in the environment to override GPU detection logic.");
-				use_prime = detect_prime();
+				use_prime = detect_prime(true);
 			}
 
 			if (use_prime) {
@@ -6268,6 +6286,82 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 	}
 
 #endif // GLES3_ENABLED
+
+
+#if defined(GLES2_ENABLED)
+	if (rendering_driver == "opengl2" || rendering_driver == "opengl2_es") {
+		if (getenv("DRI_PRIME") == nullptr) {
+			int use_prime = -1;
+
+			if (getenv("PRIMUS_DISPLAY") ||
+					getenv("PRIMUS_libGLd") ||
+					getenv("PRIMUS_libGLa") ||
+					getenv("PRIMUS_libGL") ||
+					getenv("PRIMUS_LOAD_GLOBAL") ||
+					getenv("BUMBLEBEE_SOCKET")) {
+				print_verbose("Optirun/primusrun detected. Skipping GPU detection");
+				use_prime = 0;
+			}
+
+			// Some tools use fake libGL libraries and have them override the real one using
+			// LD_LIBRARY_PATH, so we skip them. *But* Steam also sets LD_LIBRARY_PATH for its
+			// runtime and includes system `/lib` and `/lib64`... so ignore Steam.
+			if (use_prime == -1 && getenv("LD_LIBRARY_PATH") && !getenv("STEAM_RUNTIME_LIBRARY_PATH")) {
+				String ld_library_path(getenv("LD_LIBRARY_PATH"));
+				Vector<String> libraries = ld_library_path.split(":");
+
+				for (int i = 0; i < libraries.size(); ++i) {
+					if (FileAccess::exists(libraries[i] + "/libGL.so.1") ||
+							FileAccess::exists(libraries[i] + "/libGL.so")) {
+						print_verbose("Custom libGL override detected. Skipping GPU detection");
+						use_prime = 0;
+					}
+				}
+			}
+
+			if (use_prime == -1) {
+				print_verbose("Detecting GPUs, set DRI_PRIME in the environment to override GPU detection logic.");
+				use_prime = detect_prime(false);
+			}
+
+			if (use_prime) {
+				print_line("Found discrete GPU, setting DRI_PRIME=1 to use it.");
+				print_line("Note: Set DRI_PRIME=0 in the environment to disable Godot from using the discrete GPU.");
+				setenv("DRI_PRIME", "1", 1);
+			}
+		}
+	}
+	if (rendering_driver == "opengl2") {
+		gl_manager = memnew(GLManager_X11(p_resolution, GLManager_X11::GLES_2_0_COMPATIBLE));
+		if (gl_manager->initialize(x11_display) != OK || gl_manager->open_display(x11_display) != OK) {
+			memdelete(gl_manager);
+			gl_manager = nullptr;
+			bool fallback = GLOBAL_GET("rendering/gl_compatibility/fallback_to_gles");
+			if (fallback) {
+				WARN_PRINT("Your video card drivers seem not to support the required OpenGL version, switching to OpenGLES.");
+				rendering_driver = "opengl2_es";
+			} else {
+				r_error = ERR_UNAVAILABLE;
+				ERR_FAIL_MSG("Could not initialize OpenGL.");
+			}
+		} else {
+			driver_found = true;
+			RasterizerGLES2::make_current(true);
+		}
+	}
+
+	if (rendering_driver == "opengl2_es") {
+		gl_manager_egl = memnew(GLManagerEGL_X11(false));
+		if (gl_manager_egl->initialize() != OK) {
+			memdelete(gl_manager_egl);
+			gl_manager_egl = nullptr;
+			r_error = ERR_UNAVAILABLE;
+			ERR_FAIL_MSG("Could not initialize OpenGLES.");
+		}
+		driver_found = true;
+		RasterizerGLES2::make_current(false);
+	}
+#endif
 
 	if (!driver_found) {
 		r_error = ERR_UNAVAILABLE;
@@ -6497,7 +6591,7 @@ DisplayServerX11::~DisplayServerX11() {
 			rendering_context->window_destroy(E.key);
 		}
 #endif
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		if (gl_manager) {
 			gl_manager->window_destroy(E.key);
 		}
@@ -6548,7 +6642,7 @@ DisplayServerX11::~DisplayServerX11() {
 	}
 #endif
 
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (gl_manager) {
 		memdelete(gl_manager);
 		gl_manager = nullptr;

@@ -90,7 +90,7 @@ def configure(env: "SConsEnvironment"):
 
     # Cross-compilation
     # TODO: Support cross-compilation on architectures other than x86.
-    host_is_64_bit = sys.maxsize > 2**32
+    host_is_64_bit = sys.maxsize > 2 ** 32
     if host_is_64_bit and env["arch"] == "x86_32":
         env.Append(CCFLAGS=["-m32"])
         env.Append(LINKFLAGS=["-m32"])
@@ -484,6 +484,8 @@ def configure(env: "SConsEnvironment"):
             # No pkgconfig file so far, hardcode expected lib name.
             env.Append(LIBS=["glslang", "SPIRV"])
 
+    if env["opengl2"]:
+        env.Append(CPPDEFINES=["GLES2_ENABLED"])
     if env["opengl3"]:
         env.Append(CPPDEFINES=["GLES3_ENABLED"])
 
