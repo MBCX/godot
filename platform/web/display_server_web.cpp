@@ -42,6 +42,10 @@
 #include "drivers/gles3/rasterizer_gles3.h"
 #endif
 
+#ifdef GLES2_ENABLED
+#include "drivers/gles2/rasterizer_gles2.h"
+#endif
+
 #include <emscripten.h>
 #include <png.h>
 
@@ -921,6 +925,9 @@ Vector<String> DisplayServerWeb::get_rendering_drivers_func() {
 #ifdef GLES3_ENABLED
 	drivers.push_back("opengl3");
 #endif
+#ifdef GLES2_ENABLED
+	drivers.push_back("opengl2");
+#endif
 	return drivers;
 }
 
@@ -1047,8 +1054,9 @@ DisplayServerWeb::DisplayServerWeb(const String &p_rendering_driver, WindowMode 
 	// Expose method for requesting quit.
 	godot_js_os_request_quit_cb(request_quit_callback);
 
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	bool webgl2_inited = false;
+	bool webgl1_inited = false;
 	if (godot_js_display_has_webgl(2)) {
 		EmscriptenWebGLContextAttributes attributes;
 		emscripten_webgl_init_context_attributes(&attributes);
@@ -1060,18 +1068,39 @@ DisplayServerWeb::DisplayServerWeb(const String &p_rendering_driver, WindowMode 
 		webgl_ctx = emscripten_webgl_create_context(canvas_id, &attributes);
 		webgl2_inited = webgl_ctx && emscripten_webgl_make_context_current(webgl_ctx) == EMSCRIPTEN_RESULT_SUCCESS;
 	}
+
 	if (webgl2_inited) {
 		if (!emscripten_webgl_enable_extension(webgl_ctx, "OVR_multiview2")) {
 			print_verbose("Failed to enable WebXR extension.");
 		}
 		RasterizerGLES3::make_current(false);
-
 	} else {
-		OS::get_singleton()->alert(
-				"Your browser seems not to support WebGL 2.\n\n"
-				"If possible, consider updating your browser version and video card drivers.",
-				"Unable to initialize WebGL 2 video driver");
-		RasterizerDummy::make_current();
+		// OS::get_singleton()->alert(
+		// 		"Your browser seems not to support WebGL 2.\n\n"
+		// 		"If possible, consider updating your browser version and video card drivers.",
+		// 		"Unable to initialize WebGL 2 video driver");
+		WARN_PRINT("Your browser seems not to support WebGL 2. Attempting to initialise WebGL 1.");
+
+		if (godot_js_display_has_webgl(1)) {
+			EmscriptenWebGLContextAttributes attributes;
+			emscripten_webgl_init_context_attributes(&attributes);
+			attributes.alpha = OS::get_singleton()->is_layered_allowed();
+			attributes.antialias = false;
+			attributes.majorVersion = 1;
+			attributes.explicitSwapControl = true;
+
+			webgl_ctx = emscripten_webgl_create_context(canvas_id, &attributes);
+			webgl1_inited = webgl_ctx && emscripten_webgl_make_context_current(webgl_ctx) == EMSCRIPTEN_RESULT_SUCCESS;
+		}
+
+		if (webgl1_inited) {
+			RasterizerGLES2::make_current();
+		} else {
+			OS::get_singleton()->alert(
+					"Your browser seems not to support WebGL 1.\n\n"
+					"If possible, consider updating your browser version and video card drivers.",
+					"Unable to initialize WebGL 1 video driver");
+		}
 	}
 #else
 	RasterizerDummy::make_current();
@@ -1106,7 +1135,7 @@ DisplayServerWeb::~DisplayServerWeb() {
 		memdelete(native_menu);
 		native_menu = nullptr;
 	}
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (webgl_ctx) {
 		emscripten_webgl_commit_frame();
 		emscripten_webgl_destroy_context(webgl_ctx);
@@ -1394,7 +1423,7 @@ bool DisplayServerWeb::get_swap_cancel_ok() {
 }
 
 void DisplayServerWeb::swap_buffers() {
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	if (webgl_ctx) {
 		emscripten_webgl_commit_frame();
 	}

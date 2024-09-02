@@ -466,7 +466,15 @@ void ProjectDialog::_renderer_selected() {
 				String::utf8("\n•  ") + TTR("Least advanced 3D graphics.") +
 				String::utf8("\n•  ") + TTR("Intended for low-end/older devices.") +
 				String::utf8("\n•  ") + TTR("Uses OpenGL 3 backend (OpenGL 3.3/ES 3.0/WebGL2).") +
-				String::utf8("\n•  ") + TTR("Fastest rendering of simple scenes."));
+				String::utf8("\n•  ") + TTR("Faster rendering of simple scenes."));
+	} else if (renderer_type == "gl_legacy") {
+		renderer_info->set_text(
+				String::utf8("•  ") + TTR("Supports desktop, mobile + web platforms.") +
+				String::utf8("\n•  ") + TTR("Basic 3D graphics capabilities.") +
+				String::utf8("\n•  ") + TTR("Intended for very old devices and maximum compatibility.") +
+				String::utf8("\n•  ") + TTR("Uses OpenGL ES 2.0 / WebGL 1.0 backend.") + +
+				String::utf8("\n•  ") + TTR("Fastest rendering of simple scenes.") +
+				String::utf8("\n•  ") + TTR("Limited shader capabilities compared to newer versions."));
 	} else {
 		WARN_PRINT("Unknown renderer type. Please report this as a bug on GitHub.");
 	}
@@ -528,6 +536,12 @@ void ProjectDialog::ok_pressed() {
 			project_features.push_back("GL Compatibility");
 			// Also change the default rendering method for the mobile override.
 			initial_settings["rendering/renderer/rendering_method.mobile"] = "gl_compatibility";
+		} else if (renderer_type == "gl_legacy") {
+			project_features.push_back("GL Legacy");
+			initial_settings["rendering/renderer/rendering_method.mobile"] = "gl_legacy";
+			// Also change the default rendering method for the web override
+			// to prioritise WebGL 1.0
+			initial_settings["rendering/renderer/rendering_method.web"] = "gl_legacy";
 		} else {
 			WARN_PRINT("Unknown renderer type. Please report this as a bug on GitHub.");
 		}
@@ -934,6 +948,8 @@ ProjectDialog::ProjectDialog() {
 	rendering_device_supported = DisplayServer::can_create_rendering_device();
 
 	if (!rendering_device_supported) {
+		// Still default to GL 3 even if
+		// GL 2 is available.
 		default_renderer_type = "gl_compatibility";
 	}
 
@@ -972,6 +988,20 @@ ProjectDialog::ProjectDialog() {
 	rvb->add_child(rs_button);
 #if defined(GLES3_ENABLED)
 	if (default_renderer_type == "gl_compatibility") {
+		rs_button->set_pressed(true);
+	}
+#endif
+	rs_button = memnew(CheckBox);
+	rs_button->set_button_group(renderer_button_group);
+	rs_button->set_text(TTR("Legacy"));
+#if !defined(GLES2_ENABLED)
+	rs_button->set_disabled(true);
+#endif
+	rs_button->set_meta(SNAME("rendering_method"), "gl_legacy");
+	rs_button->connect(SceneStringName(pressed), callable_mp(this, &ProjectDialog::_renderer_selected));
+	rvb->add_child(rs_button);
+#if defined(GLES2_ENABLED)
+	if (default_renderer_type == "gl_legacy") {
 		rs_button->set_pressed(true);
 	}
 #endif

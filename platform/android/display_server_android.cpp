@@ -48,7 +48,13 @@
 
 #ifdef GLES3_ENABLED
 #include "drivers/gles3/rasterizer_gles3.h"
+#endif
 
+#ifdef GLES2_ENABLED
+#include "drivers/gles2/rasterizer_gles2.h"
+#endif
+
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 #include <EGL/egl.h>
 #endif
 
@@ -370,15 +376,21 @@ int64_t DisplayServerAndroid::window_get_native_handle(HandleType p_handle_type,
 		case WINDOW_VIEW: {
 			return 0; // Not supported.
 		}
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 		case DISPLAY_HANDLE: {
 			if (rendering_driver == "opengl3") {
+				return reinterpret_cast<int64_t>(eglGetCurrentDisplay());
+			} else if (rendering_driver == "opengl2") {
+				// Separate here.
 				return reinterpret_cast<int64_t>(eglGetCurrentDisplay());
 			}
 			return 0;
 		}
 		case OPENGL_CONTEXT: {
 			if (rendering_driver == "opengl3") {
+				return reinterpret_cast<int64_t>(eglGetCurrentContext());
+			} else if (rendering_driver == "opengl2") {
+				// Separate here.
 				return reinterpret_cast<int64_t>(eglGetCurrentContext());
 			}
 			return 0;
@@ -508,6 +520,9 @@ Vector<String> DisplayServerAndroid::get_rendering_drivers_func() {
 #ifdef GLES3_ENABLED
 	drivers.push_back("opengl3");
 #endif
+#ifdef GLES2_ENABLED
+	drivers.push_back("opengl2");
+#endif
 #ifdef VULKAN_ENABLED
 	drivers.push_back("vulkan");
 #endif
@@ -523,9 +538,13 @@ DisplayServer *DisplayServerAndroid::create_func(const String &p_rendering_drive
 					"Your device seems not to support the required Vulkan version.\n\n"
 					"Please try exporting your game using the 'gl_compatibility' renderer.",
 					"Unable to initialize Vulkan video driver");
-		} else {
+		} else if (p_rendering_driver == "opengl3") {
 			OS::get_singleton()->alert(
 					"Your device seems not to support the required OpenGL ES 3.0 version.",
+					"Unable to initialize OpenGL video driver");
+		} else {
+			OS::get_singleton()->alert(
+					"Your device seems not to support the required OpenGL ES 2.0 version.",
 					"Unable to initialize OpenGL video driver");
 		}
 	}
@@ -593,6 +612,12 @@ DisplayServerAndroid::DisplayServerAndroid(const String &p_rendering_driver, Dis
 #if defined(GLES3_ENABLED)
 	if (rendering_driver == "opengl3") {
 		RasterizerGLES3::make_current(false);
+	}
+#endif
+
+#if defined(GLES2_ENABLED)
+	if (rendering_driver == "opengl2") {
+		RasterizerGLES2::make_current();
 	}
 #endif
 

@@ -30,7 +30,7 @@
 
 #include "gl_manager_windows_native.h"
 
-#if defined(WINDOWS_ENABLED) && defined(GLES3_ENABLED)
+#if defined(WINDOWS_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include "core/config/project_settings.h"
 #include "core/version.h"
@@ -249,6 +249,8 @@ void GLManagerNative_Windows::_nvapi_setup_profile() {
 	ogl_thread_control_setting.settingType = NVDRS_DWORD_TYPE;
 	int thread_control_val = OGL_THREAD_CONTROL_DISABLE;
 	if (!GLOBAL_GET("rendering/gl_compatibility/nvidia_disable_threaded_optimization")) {
+		thread_control_val = OGL_THREAD_CONTROL_ENABLE;
+	} else if (!GLOBAL_GET("rendering/gl_legacy/nvidia_disable_threated_optimization")) {
 		thread_control_val = OGL_THREAD_CONTROL_ENABLE;
 	}
 	ogl_thread_control_setting.u32CurrentValue = thread_control_val;

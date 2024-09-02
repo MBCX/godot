@@ -30,7 +30,7 @@
 
 #include "gl_manager_macos_angle.h"
 
-#if defined(MACOS_ENABLED) && defined(GLES3_ENABLED)
+#if defined(MACOS_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,4 +67,4 @@ Vector<EGLint> GLManagerANGLE_MacOS::_get_platform_context_attribs() const {
 	return ret;
 }
 
-#endif // MACOS_ENABLED && GLES3_ENABLED
+#endif // MACOS_ENABLED && (GLES3_ENABLED || GLES2_ENABLED)

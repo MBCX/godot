@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#if defined(X11_ENABLED) && defined(GLES3_ENABLED)
+#if defined(X11_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include "detect_prime_x11.h"
 
@@ -276,4 +276,4 @@ int detect_prime() {
 	return preferred;
 }
 
-#endif // X11_ENABLED && GLES3_ENABLED
+#endif // X11_ENABLED && (GLES3_ENABLED || GLES2_ENABLED)

@@ -450,6 +450,9 @@ def configure(env: "SConsEnvironment"):
         env.Append(CPPDEFINES=["X11_ENABLED"])
 
     if env["wayland"]:
+        if env["opengl2"]:
+            print("Wayland is only available for OpenGL 3.0")
+        
         if not env["use_sowrap"]:
             if os.system("pkg-config --exists libdecor-0"):
                 print_warning("libdecor development libraries not found. Disabling client-side decorations.")
@@ -486,6 +489,9 @@ def configure(env: "SConsEnvironment"):
 
     if env["opengl3"]:
         env.Append(CPPDEFINES=["GLES3_ENABLED"])
+
+    if env["opengl2"]:
+        env.Append(CPPDEFINES=["GLES2_ENABLED"])
 
     env.Append(LIBS=["pthread"])
 

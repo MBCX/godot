@@ -1667,6 +1667,7 @@ bool OpenXRAPI::initialize(const String &p_rendering_driver) {
 		ERR_FAIL_V(false);
 #endif
 	} else {
+		// Sensible decision for opengl2
 		ERR_FAIL_V_MSG(false, "OpenXR: Unsupported rendering device.");
 	}
 

@@ -179,3 +179,11 @@ def configure(env: "SConsEnvironment"):
                 "$IOS_SDK_PATH/System/Library/Frameworks/OpenGLES.framework/Headers",
             ]
         )
+    
+    if env["opengl2"]:
+        env.Append(CPPDEFINES=["GLES2_ENABLED", "GLES_SILENCE_DEPRECATION"])
+        env.Prepend(
+            CPPPATH=[
+                "$IOS_SDK_PATH/System/Library/Frameworks/OpenGLES.framework/Headers",
+            ]
+        )
