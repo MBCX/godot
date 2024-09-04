@@ -30,4 +30,4 @@ if "GLES2_GLSL" in env["BUILDERS"]:
     #     env.GLES3_GLSL(glsl_file)
 
 
-#SConscript("effects/SCsub")
+SConscript("effects/SCsub")
