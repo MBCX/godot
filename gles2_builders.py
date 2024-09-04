@@ -7,7 +7,6 @@ import os.path
 from typing import Optional
 
 from methods import print_error, to_raw_cstring
-from platform_methods import subprocess_main
 
 
 class LegacyGLHeaderStruct:

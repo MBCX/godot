@@ -41,12 +41,15 @@
 #include GLES2_INCLUDE_H
 #endif
 
-#include "core/hash_map.h"
-#include "core/map.h"
-#include "core/math/camera_matrix.h"
-#include "core/pair.h"
-#include "core/variant.h"
-#include "servers/visual/shader_language.h"
+#include "core/math/projection.h"
+#include "core/os/mutex.h"
+#include "core/string/string_builder.h"
+#include "core/templates/hash_map.h"
+#include "core/templates/local_vector.h"
+#include "core/templates/rb_map.h"
+#include "core/templates/rid_owner.h"
+#include "core/variant/variant.h"
+#include "servers/rendering_server.h"
 
 #include <stdio.h>
 

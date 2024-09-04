@@ -1035,7 +1035,7 @@ GLSL_BUILDERS = {
         src_suffix=".glsl",
     ),
     "GLES2_GLSL": env.Builder(
-        action=env.Run(gles2_builders.build_gles3_headers),
+        action=env.Run(gles2_builders.build_gles2_headers),
         suffix="glsl.gen.h",
         src_suffix=".glsl",
     ),

@@ -1992,12 +1992,13 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		String driver_hints = "";
 		String driver_hints_angle = "";
 		String driver_hints_egl = "";
+		String default_driver = "";
 #ifdef GLES3_ENABLED
 		driver_hints = "opengl3";
 		driver_hints_angle = "opengl3,opengl3_angle"; // macOS, Windows.
 		driver_hints_egl = "opengl3,opengl3_es"; // Linux.
 
-		String default_driver = driver_hints.get_slice(",", 0);
+		default_driver = driver_hints.get_slice(",", 0);
 
 		GLOBAL_DEF_RST_NOVAL("rendering/gl_compatibility/driver", default_driver);
 		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_compatibility/driver.windows", PROPERTY_HINT_ENUM, driver_hints_angle), default_driver);
@@ -2018,7 +2019,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		driver_hints_angle = "opengl2,opengl2_angle"; // macOS, Windows.
 		driver_hints_egl = "opengl2,opengl2_es"; // Linux.
 
-		String default_driver = driver_hints.get_slice(",", 0);
+		default_driver = driver_hints.get_slice(",", 0);
 
 		GLOBAL_DEF_RST_NOVAL("rendering/gl_legacy/driver", default_driver);
 		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.windows", PROPERTY_HINT_ENUM, driver_hints_angle), default_driver);
@@ -2226,7 +2227,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	if (default_renderer_mobile.is_empty()) {
 		default_renderer_mobile = "gl_legacy";
 	}
-	// Default to Compatibility when using the project manager.
+	// Default to Legacy when using the project manager.
 	if (rendering_driver.is_empty() && rendering_method.is_empty() && project_manager) {
 		rendering_driver = "opengl2";
 		rendering_method = "gl_legacy";
@@ -2312,7 +2313,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		if (rendering_method.is_empty()) {
 			if (rendering_driver == "opengl3" || rendering_driver == "opengl3_angle" || rendering_driver == "opengl3_es") {
 				rendering_method = "gl_compatibility";
-			} else if (rendering_driver == "opengl2" || rendering_driver == "opengl2_angle") {
+			} else if (rendering_driver == "opengl2" || rendering_driver == "opengl2_angle" || rendering_driver == "opengl2_es") {
 				rendering_method = "gl_legacy";
 			} else {
 				rendering_method = "forward_plus";

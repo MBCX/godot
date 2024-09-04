@@ -231,7 +231,7 @@ public:
 
 	uint64_t shadow_atlas_realloc_tolerance_msec;
 
-	struct ShadowAtlas : public RID_Data {
+	struct ShadowAtlas : public RID {
 		enum {
 			QUADRANT_SHIFT = 27,
 			SHADOW_INDEX_MASK = (1 << QUADRANT_SHIFT) - 1,
@@ -268,7 +268,7 @@ public:
 		GLuint depth;
 		GLuint color;
 
-		Map<RID, uint32_t> shadow_owners;
+		HashMap<RID, uint32_t> shadow_owners;
 	};
 
 	struct ShadowCubeMap {
@@ -314,7 +314,7 @@ public:
 
 	/* REFLECTION PROBE INSTANCE */
 
-	struct ReflectionProbeInstance : public RID_Data {
+	struct ReflectionProbeInstance : public RID {
 		RasterizerStorageGLES2::ReflectionProbe *probe_ptr;
 		RID probe;
 		RID self;
@@ -336,7 +336,7 @@ public:
 		uint64_t last_pass;
 		uint32_t index;
 
-		Transform transform;
+		Transform3D transform;
 	};
 
 	mutable RID_Owner<ReflectionProbeInstance> reflection_probe_instance_owner;
@@ -345,7 +345,7 @@ public:
 	int reflection_probe_count;
 
 	virtual RID reflection_probe_instance_create(RID p_probe);
-	virtual void reflection_probe_instance_set_transform(RID p_instance, const Transform &p_transform);
+	virtual void reflection_probe_instance_set_transform(RID p_instance, const Transform3D &p_transform);
 	virtual void reflection_probe_release_atlas_index(RID p_instance);
 	virtual bool reflection_probe_instance_needs_redraw(RID p_instance);
 	virtual bool reflection_probe_instance_has_reflection(RID p_instance);
@@ -354,8 +354,8 @@ public:
 
 	/* ENVIRONMENT API */
 
-	struct Environment : public RID_Data {
-		VS::EnvironmentBG bg_mode;
+	struct Environment : public RID {
+		OS::get_environment() bg_mode;
 
 		RID sky;
 		float sky_custom_fov;

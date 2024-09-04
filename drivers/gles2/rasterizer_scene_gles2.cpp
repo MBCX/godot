@@ -35,18 +35,19 @@
 #include "core/math/math_funcs.h"
 #include "core/math/transform.h"
 #include "core/os/os.h"
-#include "core/project_settings.h"
-#include "core/vmap.h"
+#include "core/config/project_settings.h"
+#include "core/templates/vmap.h"
 #include "rasterizer_canvas_gles2.h"
 #include "servers/camera/camera_feed.h"
-#include "servers/visual/visual_server_raster.h"
+#include "servers/rendering/rendering_server_default.h"
+#include "servers/rendering/rendering_server_globals.h"
 
 #ifndef GLES_OVER_GL
 #define glClearDepth glClearDepthf
 #endif
 
 #ifndef GLES_OVER_GL
-#ifdef IPHONE_ENABLED
+#ifdef IOS_ENABLED
 #include <OpenGLES/ES2/glext.h>
 //void *glResolveMultisampleFramebufferAPPLE;
 
