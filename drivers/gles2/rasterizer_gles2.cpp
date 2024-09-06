@@ -67,7 +67,7 @@
 #endif
 #endif
 
-#ifndef IPHONE_ENABLED
+#ifndef IOS_ENABLED
 // We include EGL below to get debug callback on GLES2 platforms,
 // but EGL is not available on iOS.
 #define CAN_DEBUG
@@ -263,7 +263,7 @@ void RasterizerGLES2::initialize() {
 #endif // GLES_OVER_GL
 #endif // CAN_DEBUG
 
-	print_line("OpenGL ES 2.0 Renderer: " + VisualServer::get_singleton()->get_video_adapter_name());
+	print_line("OpenGL ES 2.0 Renderer: " + RenderingServer::get_singleton()->get_video_adapter_name());
 	storage->initialize();
 	canvas->initialize();
 	scene->initialize();
@@ -307,7 +307,7 @@ void RasterizerGLES2::set_current_render_target(RID p_render_target) {
 	}
 
 	if (p_render_target.is_valid()) {
-		RasterizerStorageGLES2::RenderTarget *rt = storage->render_target_owner.getornull(p_render_target);
+		GLES2::Storage::RenderTarget *rt = storage->render_target_owner.getornull(p_render_target);
 		storage->frame.current_rt = rt;
 		ERR_FAIL_COND(!rt);
 		storage->frame.clear_request = false;
@@ -339,18 +339,18 @@ void RasterizerGLES2::clear_render_target(const Color &p_color) {
 }
 
 void RasterizerGLES2::set_boot_image(const Ref<Image> &p_image, const Color &p_color, bool p_scale, bool p_use_filter) {
-	if (p_image.is_null() || p_image->empty()) {
+	if (p_image.is_valid()) {
 		return;
 	}
 
-	int window_w = OS::get_singleton()->get_video_mode(0).width;
-	int window_h = OS::get_singleton()->get_video_mode(0).height;
+	int window_w = DisplayServer::get_singleton()->window_get_size(0).width;
+	int window_h = DisplayServer::get_singleton()->window_get_size(0).height;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window_w, window_h);
 	glDisable(GL_BLEND);
 	glDepthMask(GL_FALSE);
-	if (OS::get_singleton()->get_window_per_pixel_transparency_enabled()) {
+	if (DisplayServer::get_singleton()->has_feature(DisplayServer::Feature::FEATURE_WINDOW_TRANSPARENCY)) {
 		glClearColor(0.0, 0.0, 0.0, 0.0);
 	} else {
 		glClearColor(p_color.r, p_color.g, p_color.b, 1.0);
@@ -359,7 +359,7 @@ void RasterizerGLES2::set_boot_image(const Ref<Image> &p_image, const Color &p_c
 
 	canvas->canvas_begin();
 
-	RID texture = RID_PRIME(storage->texture_create());
+	RID texture = RID(storage->texture_create());
 	storage->texture_allocate(texture, p_image->get_width(), p_image->get_height(), 0, p_image->get_format(), VS::TEXTURE_TYPE_2D, p_use_filter ? (uint32_t)VS::TEXTURE_FLAG_FILTER : 0);
 	storage->texture_set_data(texture, p_image);
 
@@ -383,7 +383,7 @@ void RasterizerGLES2::set_boot_image(const Ref<Image> &p_image, const Color &p_c
 		screenrect.position += ((Size2(window_w, window_h) - screenrect.size) / 2.0).floor();
 	}
 
-	RasterizerStorageGLES2::Texture *t = storage->texture_owner.get(texture);
+	GLES2::TextureStorage::Texture *t = storage->texture_owner.get(texture);
 	WRAPPED_GL_ACTIVE_TEXTURE(GL_TEXTURE0 + storage->config.max_texture_image_units - 1);
 	glBindTexture(GL_TEXTURE_2D, t->tex_id);
 	canvas->draw_generic_textured_rect(screenrect, Rect2(0, 0, 1, 1));
@@ -453,7 +453,7 @@ void RasterizerGLES2::output_lens_distorted_to_screen(RID p_render_target, const
 
 void RasterizerGLES2::end_frame(bool p_swap_buffers) {
 	if (OS::get_singleton()->is_layered_allowed()) {
-		if (!OS::get_singleton()->get_window_per_pixel_transparency_enabled()) {
+		if (DisplayServer::get_singleton()->has_feature(DisplayServer::Feature::FEATURE_WINDOW_TRANSPARENCY)) {
 			//clear alpha
 			glColorMask(false, false, false, true);
 			glClearColor(0, 0, 0, 1);

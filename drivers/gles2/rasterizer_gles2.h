@@ -63,7 +63,7 @@ private:
 protected:
 	GLES2::Config *config = nullptr;
 	GLES2::Utilities *utilities = nullptr;
-	GLES2::TextureStorage *text ure_storage = nullptr;
+	GLES2::TextureStorage *texture_storage = nullptr;
 	GLES2::MaterialStorage *material_storage = nullptr;
 	GLES2::MeshStorage *mesh_storage = nullptr;
 	GLES2::ParticlesStorage *particles_storage = nullptr;
@@ -74,8 +74,10 @@ protected:
 	GLES2::CubemapFilter *cubemap_filter = nullptr;
 	GLES2::Glow *glow = nullptr;
 	GLES2::PostEffects *post_effects = nullptr;
-	RasterizerCanvasGLES2 *canvas = nullptr;
-	RasterizerSceneGLES2 *scene = nullptr;
+	// GLES2::RasterizerCanvasGLES2 *canvas = nullptr;
+	// GLES2::RasterizerSceneGLES2 *scene = nullptr;
+	GLES2::RendererCanvasRender *canvas = nullptr;
+	GLES2::RendererSceneRender *scene = nullptr;
 	static RasterizerGLES2 *singleton;
 
 	void _blit_render_target_to_screen(RID p_render_target, DisplayServer::WindowID p_screen, const Rect2 &p_screen_rect, uint32_t p_layer, bool p_first = true);
@@ -127,7 +129,7 @@ public:
 	_ALWAYS_INLINE_ double get_frame_delta_time() const { return delta; }
 	_ALWAYS_INLINE_ double get_total_time() const { return time_total; }
 
-	static RasterizerGLES3 *get_singleton() { return singleton; }
+	static RasterizerGLES2 *get_singleton() { return singleton; }
 
 	RasterizerGLES2();
 	~RasterizerGLES2();

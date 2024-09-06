@@ -67,6 +67,7 @@ public:
     bool s3tc_supported = false;
     bool etc_supported = false;
     bool pvrtc_supported = false;
+	bool disable_shader_cache = false;
 
     bool force_vertex_shading = false;
 

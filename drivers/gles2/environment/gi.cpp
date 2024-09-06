@@ -140,4 +140,4 @@ uint32_t GI::voxel_gi_get_version(RID p_voxel_gi) const {
 void GI::sdfgi_reset() {
 }
 
-#endif // GLES3_ENABLED
+#endif // GLES2_ENABLED
