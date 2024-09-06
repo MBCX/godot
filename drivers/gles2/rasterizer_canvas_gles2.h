@@ -33,7 +33,6 @@
 
 #ifdef GLES2_ENABLED
 
-#include "rasterizer_scene_gles2.h"
 #include "servers/rendering/renderer_canvas_render.h"
 #include "servers/rendering/renderer_compositor.h"
 #include "storage/material_storage.h"
@@ -42,7 +41,7 @@
 #include "drivers/gles2/shaders/canvas.glsl.gen.h"
 #include "drivers/gles2/shaders/canvas_occlusion.glsl.gen.h"
 
-class RasterizerSceneGLES2;
+class RasterizerCanvasGLES2;
 
 class RasterizerCanvasGLES2 : public RendererCanvasRender {
 	static RasterizerCanvasGLES2 *singleton;
@@ -260,13 +259,13 @@ public:
 		RS::CanvasItemTextureFilter filter = RS::CANVAS_ITEM_TEXTURE_FILTER_MAX;
 		RS::CanvasItemTextureRepeat repeat = RS::CANVAS_ITEM_TEXTURE_REPEAT_MAX;
 
-		GLES2::CanvasShaderData::BlendMode blend_mode = GLES2::CanvasShaderData::BLEND_MODE_MIX;
+		GLES2::BlendMode blend_mode = GLES2::BLEND_MODE_MIX;
 		Color blend_color = Color(1.0, 1.0, 1.0, 1.0);
 
 		Item *clip = nullptr;
 
 		RID material;
-		GLES2::CanvasMaterialData *material_data = nullptr;
+		GLES2::MaterialData *material_data = nullptr;
 		CanvasShaderGLES2::ShaderVariant shader_variant = CanvasShaderGLES2::MODE_QUAD;
 		uint64_t vertex_input_mask = RS::ARRAY_FORMAT_VERTEX | RS::ARRAY_FORMAT_COLOR | RS::ARRAY_FORMAT_TEX_UV;
 
@@ -352,9 +351,9 @@ public:
 
 	void canvas_render_items(RID p_to_render_target, Item *p_item_list, const Color &p_modulate, Light *p_light_list, Light *p_directional_list, const Transform2D &p_canvas_transform, RS::CanvasItemTextureFilter p_default_filter, RS::CanvasItemTextureRepeat p_default_repeat, bool p_snap_2d_vertices_to_pixel, bool &r_sdf_used, RenderingMethod::RenderInfo *r_render_info = nullptr) override;
 	void _render_items(RID p_to_render_target, int p_item_count, const Transform2D &p_canvas_transform_inverse, Light *p_lights, bool &r_sdf_used, bool p_to_backbuffer = false, RenderingMethod::RenderInfo *r_render_info = nullptr);
-	void _record_item_commands(const Item *p_item, RID p_render_target, const Transform2D &p_canvas_transform_inverse, Item *&current_clip, GLES2::CanvasShaderData::BlendMode p_blend_mode, Light *p_lights, uint32_t &r_index, bool &r_break_batch, bool &r_sdf_used, const Point2 &p_repeat_offset);
+	void _record_item_commands(const Item *p_item, RID p_render_target, const Transform2D &p_canvas_transform_inverse, Item *&current_clip, GLES2::BlendMode p_blend_mode, Light *p_lights, uint32_t &r_index, bool &r_break_batch, bool &r_sdf_used, const Point2 &p_repeat_offset);
 	void _render_batch(Light *p_lights, uint32_t p_index, RenderingMethod::RenderInfo *r_render_info = nullptr);
-	bool _bind_material(GLES2::CanvasMaterialData *p_material_data, CanvasShaderGLES2::ShaderVariant p_variant, uint64_t p_specialization);
+	bool _bind_material(GLES2::MaterialData *p_material_data, CanvasShaderGLES2::ShaderVariant p_variant, uint64_t p_specialization);
 	void _new_batch(bool &r_batch_broken);
 	void _add_to_batch(uint32_t &r_index, bool &r_batch_broken);
 	void _allocate_instance_data_buffer();
@@ -365,7 +364,7 @@ public:
 
 	virtual void set_debug_redraw(bool p_enabled, double p_time, const Color &p_color) override {
 		if (p_enabled) {
-			WARN_PRINT_ONCE("Debug CanvasItem Redraw is not available yet when using the GL Compatibility backend.");
+			WARN_PRINT_ONCE("Debug CanvasItem Redraw is not available when using the GL Legacy backend.");
 		}
 	}
 

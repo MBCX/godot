@@ -451,7 +451,7 @@ def configure(env: "SConsEnvironment"):
 
     if env["wayland"]:
         if env["opengl2"]:
-            print("Wayland is only available for OpenGL 3.0")
+            print_warning("Wayland is only available for OpenGL 3.0")
         
         if not env["use_sowrap"]:
             if os.system("pkg-config --exists libdecor-0"):

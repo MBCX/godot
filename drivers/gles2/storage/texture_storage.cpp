@@ -507,30 +507,30 @@ void TextureStorage::_render_target_allocate(RenderTarget *rt) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void TextureStorage::render_target_set_flag(RID p_render_target, RenderTargetFlags p_flag, bool p_value) {
-    RenderTarget *rt = render_target_owner.get_or_null(p_render_target);
-    ERR_FAIL_NULL(rt);
+// void TextureStorage::render_target_set_flag(RID p_render_target, RenderTargetFlags p_flag, bool p_value) {
+//     RenderTarget *rt = render_target_owner.get_or_null(p_render_target);
+//     ERR_FAIL_NULL(rt);
 
-    switch (p_flag) {
-        case RENDER_TARGET_TRANSPARENT: {
-            rt->is_transparent = p_value;
-            // Re-create the render target if it already exists
-            if (rt->fbo != 0) {
-                _render_target_clear(rt);
-                _render_target_allocate(rt);
-            }
-        } break;
-        case RENDER_TARGET_DIRECT_TO_SCREEN: {
-            if (p_value) {
-                // Direct to screen not supported in GLES2
-                WARN_PRINT("Direct to screen render targets are not supported in GLES2.");
-            }
-        } break;
-        default: {
-            ERR_FAIL_MSG("Unknown render target flag.");
-        }
-    }
-}
+//     switch (p_flag) {
+//         case RENDER_TARGET_TRANSPARENT: {
+//             rt->is_transparent = p_value;
+//             // Re-create the render target if it already exists
+//             if (rt->fbo != 0) {
+//                 _render_target_clear(rt);
+//                 _render_target_allocate(rt);
+//             }
+//         } break;
+//         case RENDER_TARGET_DIRECT_TO_SCREEN: {
+//             if (p_value) {
+//                 // Direct to screen not supported in GLES2
+//                 WARN_PRINT("Direct to screen render targets are not supported in GLES2.");
+//             }
+//         } break;
+//         default: {
+//             ERR_FAIL_MSG("Unknown render target flag.");
+//         }
+//     }
+// }
 
 bool TextureStorage::render_target_was_used(RID p_render_target) {
     RenderTarget *rt = render_target_owner.get_or_null(p_render_target);
@@ -925,30 +925,6 @@ RID TextureStorage::render_target_get_texture(RID p_render_target) {
 void TextureStorage::render_target_set_external_texture(RID p_render_target, unsigned int p_texture_id) {
     // External textures are not supported in GLES2
     WARN_PRINT("External textures are not supported in GLES2.");
-}
-
-void TextureStorage::render_target_set_flag(RID p_render_target, RenderTargetFlags p_flag, bool p_value) {
-    RenderTarget *rt = render_target_owner.get_or_null(p_render_target);
-    ERR_FAIL_NULL(rt);
-
-    switch (p_flag) {
-        case RENDER_TARGET_TRANSPARENT:
-            rt->is_transparent = p_value;
-            break;
-        case RENDER_TARGET_DIRECT_TO_SCREEN:
-            // Not supported in GLES2
-            WARN_PRINT("Direct to screen render targets are not supported in GLES2.");
-            break;
-        case RENDER_TARGET_FLAG_MAX:
-            break; // Can't happen, but silences warning
-    }
-}
-
-bool TextureStorage::render_target_was_used(RID p_render_target) {
-    RenderTarget *rt = render_target_owner.get_or_null(p_render_target);
-    ERR_FAIL_NULL_V(rt, false);
-
-    return rt->used_in_frame;
 }
 
 void TextureStorage::render_target_clear_used(RID p_render_target) {

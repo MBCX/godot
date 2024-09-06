@@ -118,6 +118,8 @@ private:
 		RID default_material;
 		RID default_shader_version;
 	};
+	
+	mutable RID_Owner<Particles, true> particles_owner;
 
 public:
     static ParticlesStorage *get_singleton();
@@ -180,6 +182,12 @@ public:
 
     virtual bool particles_is_inactive(RID p_particles) const override;
 
+	_FORCE_INLINE_ RS::ParticlesMode particles_get_mode(RID p_particles) {
+		Particles *particles = particles_owner.get_or_null(p_particles);
+		ERR_FAIL_NULL_V(particles, RS::PARTICLES_MODE_2D);
+		return particles->mode;
+	}
+	
     _FORCE_INLINE_ uint32_t particles_get_amount(RID p_particles) const {
         const Particles *particles = particles_owner.get_or_null(p_particles);
         ERR_FAIL_NULL_V(particles, 0);

@@ -1,8 +1,8 @@
 // Modes
-#define MODE_QUAD 0
-#define MODE_NINEPATCH 1
-#define MODE_PRIMITIVE 2
-#define MODE_ATTRIBUTES 3
+uniform int VAR_MODE_QUAD = 0;
+uniform int VAR_MODE_NINEPATCH = 1;
+uniform int VAR_MODE_PRIMITIVE = 2;
+uniform int VAR_MODE_ATTRIBUTES = 3;
 
 // Specializations
 // Note: In GLES2, we'll use preprocessor definitions instead of specialization constants

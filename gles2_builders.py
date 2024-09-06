@@ -65,6 +65,12 @@ def include_file_in_legacygl_header(filename, header_data, depth):
                     print("Error in file '" + filename + "': #include " + includeline + "could not be found!")
             line = fs.readline()
 
+        if line.strip().startswith("uniform int VAR_"):
+            var_name = line.split()[2].split('=')[0].strip()
+            if var_name not in header_data.conditionals:
+                var_name = var_name.split("VAR_")[1]
+                header_data.conditionals.append(var_name)
+
         if line.find("uniform") != -1 and line.lower().find("texunit:") != -1:
             texunitstr = line[line.find(":") + 1 :].strip()
             if texunitstr == "auto":
@@ -91,7 +97,7 @@ def include_file_in_legacygl_header(filename, header_data, depth):
                 x = x[x.rfind(" ") + 1 :]
                 if x.find("[") != -1:
                     x = x[: x.find("[")]
-                if not x in header_data.uniforms:
+                if not x in header_data.uniforms and not x.isdigit():
                     header_data.uniforms += [x]
 
         if line.strip().find("attribute ") == 0 and line.find("attrib:") != -1:
@@ -211,8 +217,8 @@ def build_legacygl_header(filename, include, class_suffix, output_attribs, gles2
     fd.write(to_raw_cstring(header_data.fragment_lines))
     fd.write("\n\t\t};\n\n")
 
-    fd.write("\t\tstatic const int _vertex_code_start=" + str(header_data.vertex_offset) + ";\n")
-    fd.write("\t\tstatic const int _fragment_code_start=" + str(header_data.fragment_offset) + ";\n")
+    #fd.write("\t\tstatic const int _vertex_code_start=" + str(header_data.vertex_offset) + ";\n")
+    #fd.write("\t\tstatic const int _fragment_code_start=" + str(header_data.fragment_offset) + ";\n")
 
     fd.write("\t\t_setup(_vertex_code,_fragment_code," +
          "\"" + out_file_class + "\"," +  # p_name parameter

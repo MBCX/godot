@@ -6307,7 +6307,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 
 #if defined(GLES2_ENABLED)
 	if (fallback && (rendering_driver == "opengl2")) {
-		const int OPENGL_VERSION_MAGIC = 20000;
+		const int OPENGL_VERSION_MAGIC = 20000; // OpenGL 2.0
 		Dictionary gl_info = detect_wgl();
 
 		bool force_angle = false;
@@ -6333,7 +6333,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 		}
 
 		if (force_angle || (gl_info["version"].operator int() < OPENGL_VERSION_MAGIC)) {
-			tested_drivers.set_flag(DRIVER_ID_COMPAT_OPENGL3);
+			tested_drivers.set_flag(DRIVER_ID_COMPAT_OPENGL2);
 			if (show_warning) {
 				if (gl_info["version"].operator int() < OPENGL_VERSION_MAGIC) {
 					WARN_PRINT("Your video card drivers seem not to support the required OpenGL 2.0 version, switching to ANGLE.");
@@ -6348,11 +6348,12 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	if (rendering_driver == "opengl2_angle") {
 		gl_manager_angle = memnew(GLManagerANGLE_Windows);
 		tested_drivers.set_flag(DRIVER_ID_COMPAT_ANGLE_D3D11);
+		// tested_drivers.set_flag(DRIVER_ID_COMPAT_ANGLE_D3D9);
 
 		if (gl_manager_angle->initialize() != OK) {
 			memdelete(gl_manager_angle);
 			gl_manager_angle = nullptr;
-			bool fallback_to_native = GLOBAL_GET("rendering/gl_compatibility/fallback_to_native");
+			bool fallback_to_native = GLOBAL_GET("rendering/gl_legacy/fallback_to_native");
 			if (fallback_to_native && gl_supported) {
 #ifdef EGL_STATIC
 				WARN_PRINT("Your video card drivers seem not to support GLES2 / ANGLE, switching to native OpenGL.");
@@ -6369,7 +6370,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 
 	if (rendering_driver == "opengl2") {
 		gl_manager_native = memnew(GLManagerNative_Windows);
-		tested_drivers.set_flag(DRIVER_ID_COMPAT_OPENGL3);
+		tested_drivers.set_flag(DRIVER_ID_COMPAT_OPENGL2);
 
 		if (gl_manager_native->initialize() != OK) {
 			memdelete(gl_manager_native);
@@ -6379,8 +6380,8 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 		}
 	}
 
-	if (rendering_driver == "opengl2" || rendering_driver == "opengl32_angle") {
-		RasterizerGLES3::make_current();
+	if (rendering_driver == "opengl2" || rendering_driver == "opengl2_angle") {
+		RasterizerGLES2::make_current();
 	}
 #endif // GLES2_ENABLED
 

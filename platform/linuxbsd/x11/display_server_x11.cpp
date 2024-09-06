@@ -6313,7 +6313,7 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 			ERR_FAIL_MSG("Could not initialize OpenGLES.");
 		}
 		driver_found = true;
-		RasterizerGLES2::make_current(false);
+		RasterizerGLES2::make_current();
 	}
 #endif
 

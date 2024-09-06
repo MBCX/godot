@@ -111,7 +111,7 @@ private:
 
     RID_Owner<Version, true> version_owner;
 
-struct StageTemplate {
+    struct StageTemplate {
         struct Chunk {
             enum Type {
                 TYPE_MATERIAL_UNIFORMS,

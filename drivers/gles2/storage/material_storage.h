@@ -84,6 +84,16 @@ struct Shader {
     HashSet<Material *> owners;
 };
 
+enum BlendMode { // Used internally.
+    BLEND_MODE_MIX,
+    BLEND_MODE_ADD,
+    BLEND_MODE_SUB,
+    BLEND_MODE_MUL,
+    BLEND_MODE_PMALPHA,
+    BLEND_MODE_DISABLED,
+    BLEND_MODE_LCD,
+};
+
 /* Material structs */
 
 struct MaterialData {
