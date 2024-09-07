@@ -419,7 +419,7 @@ void RasterizerCanvasGLES2::canvas_render_items(RID p_to_render_target, Item *p_
 		// Check material for something that may change flow of rendering, but do not bind for now.
 		RID material = ci->material_owner == nullptr ? ci->material : ci->material_owner->material;
 		if (material.is_valid()) {
-			GLES2::CanvasMaterialData *md = static_cast<GLES2::CanvasMaterialData *>(material_storage->material_get_data(material, RS::SHADER_CANVAS_ITEM));
+			GLES2::MaterialData *md = static_cast<GLES2::MaterialData *>(material_storage->material_get_data(material, RS::SHADER_CANVAS_ITEM));
 			if (md && md->shader_data->valid) {
 				if (md->shader_data->uses_screen_texture && canvas_group_owner == nullptr) {
 					if (!material_screen_texture_cached) {
@@ -2151,14 +2151,14 @@ void RasterizerCanvasGLES2::canvas_begin(RID p_to_render_target, bool p_to_backb
 	GLES2::RenderTarget *render_target = texture_storage->get_render_target(p_to_render_target);
 
 	if (p_to_backbuffer) {
-		glBindFramebuffer(GL_FRAMEBUFFER, render_target->backbuffer_fbo);
+		// glBindFramebuffer(GL_FRAMEBUFFER, render_target->backbuffer_fbo);
 		glActiveTexture(GL_TEXTURE0 + config->max_texture_image_units - 4);
 		GLES2::Texture *tex = texture_storage->get_texture(texture_storage->texture_gl_get_default(GLES2::DEFAULT_GL_TEXTURE_WHITE));
 		glBindTexture(GL_TEXTURE_2D, tex->tex_id);
 	} else {
 		glBindFramebuffer(GL_FRAMEBUFFER, render_target->fbo);
 		glActiveTexture(GL_TEXTURE0 + config->max_texture_image_units - 4);
-		glBindTexture(GL_TEXTURE_2D, render_target->backbuffer);
+		// glBindTexture(GL_TEXTURE_2D, render_target->backbuffer);
 	}
 
 	if (render_target->is_transparent || p_to_backbuffer) {
@@ -2310,7 +2310,6 @@ RasterizerCanvasGLES2::RasterizerCanvasGLES2() {
 	singleton = this;
 	GLES2::TextureStorage *texture_storage = GLES2::TextureStorage::get_singleton();
 	GLES2::MaterialStorage *material_storage = GLES2::MaterialStorage::get_singleton();
-	GLES2::Config *config = GLES2::Config::get_singleton();
 
 	glVertexAttrib4f(RS::ARRAY_COLOR, 1.0, 1.0, 1.0, 1.0);
 
@@ -2348,7 +2347,7 @@ RasterizerCanvasGLES2::RasterizerCanvasGLES2() {
 	{
 		data.max_lights_per_render = 256;
 		data.max_instances_per_buffer = 16384;
-		data.instance_buffer_size = sizeof(InstanceData) * data.max_instances_per_buffer;
+		// data.instance_buffer_size = sizeof(InstanceData) * data.max_instances_per_buffer;
 	}
 
 	// Initialize state buffers
@@ -2359,8 +2358,8 @@ RasterizerCanvasGLES2::RasterizerCanvasGLES2() {
 
 	// Initialize canvas state uniform buffer
 	{
-		glGenBuffers(1, &state.canvas_state_buffer);
-		glBindBuffer(GL_UNIFORM_BUFFER, state.canvas_state_buffer);
+		//glGenBuffers(1, &state.canvas_state_buffer);
+		//glBindBuffer(GL_UNIFORM_BUFFER, state.canvas_state_buffer);
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(StateBuffer), nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
@@ -2424,7 +2423,7 @@ RasterizerCanvasGLES2::~RasterizerCanvasGLES2() {
 	glDeleteBuffers(1, &data.canvas_quad_vertices);
 	glDeleteVertexArrays(1, &data.canvas_quad_array);
 
-	glDeleteBuffers(1, &state.canvas_state_buffer);
+	//glDeleteBuffers(1, &state.canvas_state_buffer);
 
 	if (state.shadow_fb != 0) {
 		glDeleteFramebuffers(1, &state.shadow_fb);

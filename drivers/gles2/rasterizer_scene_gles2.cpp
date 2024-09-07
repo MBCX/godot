@@ -656,13 +656,13 @@ void RasterizerSceneGLES2::render_scene(const Ref<RenderSceneBuffers> &p_render_
 
     RENDER_TIMESTAMP("Render Scene");
 
-    GLES2::TextureStorage *texture_storage = GLES2::TextureStorage::get_singleton();
-    GLES2::Config *config = GLES2::Config::get_singleton();
+    texture_storage = GLES2::TextureStorage::get_singleton();
+    config = GLES2::Config::get_singleton();
 
-    Ref<RenderSceneBuffersGLES2> rb = p_render_buffers;
+    rb = p_render_buffers;
     ERR_FAIL_COND(rb.is_null());
 
-    GLES2::RenderTarget *rt = texture_storage->get_render_target(rb->render_target);
+    rt = texture_storage->get_render_target(rb->render_target);
     ERR_FAIL_NULL(rt);
 
     // Bind framebuffer

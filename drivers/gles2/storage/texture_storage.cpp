@@ -949,6 +949,10 @@ void TextureStorage::texture_remove_from_decal_atlas(RID p_texture, bool p_panor
     WARN_PRINT("Decal atlases are not supported in GLES2.");
 }
 
+void TextureStorage::render_target_sdf_process(RID p_render_target) {
+    WARN_PRINT("Target SDF process are not supported in GLES2.");
+}
+
 TextureStorage::~TextureStorage() {
     singleton = nullptr;
 }
