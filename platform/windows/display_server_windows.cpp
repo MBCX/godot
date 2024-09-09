@@ -6209,17 +6209,21 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	}
 #endif
 // Init context and rendering device
-#if defined(GLES3_ENABLED)
-
-	bool fallback = GLOBAL_GET("rendering/gl_compatibility/fallback_to_angle");
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
+	// Determine the fallback for both types of OpenGL.
+	bool fallback = (
+		GLOBAL_GET("rendering/gl_compatibility/fallback_to_angle") ||
+		GLOBAL_GET("rendering/gl_legacy/fallback_to_angle")
+	);
 	bool show_warning = true;
+	bool gl_supported = true;
 
-	if (rendering_driver == "opengl3") {
+	if (rendering_driver == "opengl3" || rendering_driver == "opengl2") {
 		// There's no native OpenGL drivers on Windows for ARM, always enable fallback.
-#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
+	#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
 		fallback = true;
 		show_warning = false;
-#else
+	#else
 		typedef BOOL(WINAPI * IsWow64Process2Ptr)(HANDLE, USHORT *, USHORT *);
 
 		IsWow64Process2Ptr IsWow64Process2 = (IsWow64Process2Ptr)GetProcAddress(GetModuleHandle(TEXT("kernel32")), "IsWow64Process2");
@@ -6234,10 +6238,11 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 				show_warning = false;
 			}
 		}
-#endif
+	#endif // __arm__ || __aarch64__ || _M_ARM || _M_ARM64
 	}
+#endif
 
-	bool gl_supported = true;
+#if defined(GLES3_ENABLED)
 	if (fallback && (rendering_driver == "opengl3")) {
 		Dictionary gl_info = detect_wgl();
 
@@ -6316,34 +6321,88 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	if (rendering_driver == "opengl3_angle") {
 		RasterizerGLES3::make_current(false);
 	}
+#endif // GLES3_ENABLED
+
+
+#if defined(GLES2_ENABLED)
+	if (fallback && (rendering_driver == "opengl2")) {
+		const int OPENGL_VERSION_MAGIC = 20000; // OpenGL 2.0
+		Dictionary gl_info = detect_wgl();
+
+		bool force_angle = false;
+		gl_supported = gl_info["version"].operator int() >= OPENGL_VERSION_MAGIC;
+
+		Vector2i device_id = _get_device_ids(gl_info["name"]);
+		Array device_list = GLOBAL_GET("rendering/gl_legacy/force_angle_on_devices");
+		for (int i = 0; i < device_list.size(); i++) {
+			const Dictionary &device = device_list[i];
+			if (device.has("vendor") && device.has("name")) {
+				const String &vendor = device["vendor"];
+				const String &name = device["name"];
+				if (device_id != Vector2i() && vendor.begins_with("0x") && name.begins_with("0x") && device_id.x == vendor.lstrip("0x").hex_to_int() && device_id.y == name.lstrip("0x").hex_to_int()) {
+					// Check vendor/device IDs.
+					force_angle = true;
+					break;
+				} else if (gl_info["vendor"].operator String().to_upper().contains(vendor.to_upper()) && (name == "*" || gl_info["name"].operator String().to_upper().contains(name.to_upper()))) {
+					// Check vendor/device names.
+					force_angle = true;
+					break;
+				}
+			}
+		}
+
+		if (force_angle || (gl_info["version"].operator int() < OPENGL_VERSION_MAGIC)) {
+			tested_drivers.set_flag(DRIVER_ID_COMPAT_OPENGL2);
+			if (show_warning) {
+				if (gl_info["version"].operator int() < OPENGL_VERSION_MAGIC) {
+					WARN_PRINT("Your video card drivers seem not to support the required OpenGL 2.0 version, switching to ANGLE.");
+				} else {
+					WARN_PRINT("Your video card drivers are known to have low quality OpenGL 2.0 support, switching to ANGLE.");
+				}
+			}
+			rendering_driver = "opengl2_angle";
+		}
+	}
+
+	if (rendering_driver == "opengl2_angle") {
+		gl_manager_angle = memnew(GLManagerANGLE_Windows);
+		tested_drivers.set_flag(DRIVER_ID_COMPAT_ANGLE_D3D11);
+		// tested_drivers.set_flag(DRIVER_ID_COMPAT_ANGLE_D3D9);
+
+		if (gl_manager_angle->initialize() != OK) {
+			memdelete(gl_manager_angle);
+			gl_manager_angle = nullptr;
+			bool fallback_to_native = GLOBAL_GET("rendering/gl_legacy/fallback_to_native");
+			if (fallback_to_native && gl_supported) {
+#ifdef EGL_STATIC
+				WARN_PRINT("Your video card drivers seem not to support GLES2 / ANGLE, switching to native OpenGL.");
+#else
+				WARN_PRINT("Your video card drivers seem not to support GLES2 / ANGLE or ANGLE dynamic libraries (libEGL.dll and libGLESv2.dll) are missing, switching to native OpenGL.");
 #endif
-#ifdef GLES2_ENABLED
+				rendering_driver = "opengl2";
+			} else {
+				r_error = ERR_UNAVAILABLE;
+				ERR_FAIL_MSG("Could not initialize ANGLE OpenGL.");
+			}
+		}
+	}
+
 	if (rendering_driver == "opengl2") {
-		//we create a 3.3 context, because at least in my testing using 2.0 on windows sucks.
 		gl_manager_native = memnew(GLManagerNative_Windows(false));
+		tested_drivers.set_flag(DRIVER_ID_COMPAT_OPENGL2);
 
 		if (gl_manager_native->initialize() != OK) {
 			memdelete(gl_manager_native);
 			gl_manager_native = nullptr;
 			r_error = ERR_UNAVAILABLE;
-			return;
+			ERR_FAIL_MSG("Could not initialize native OpenGL.");
 		}
-
-		RasterizerGLES2::make_current(true);
 	}
-	if (rendering_driver == "opengl2_angle") {
-		gl_manager_angle = memnew(GLManagerANGLE_Windows(false));
 
-		if (gl_manager_angle->initialize() != OK) {
-			memdelete(gl_manager_angle);
-			gl_manager_angle = nullptr;
-			r_error = ERR_UNAVAILABLE;
-			return;
-		}
-
+	if (rendering_driver == "opengl2" || rendering_driver == "opengl2_angle") {
 		RasterizerGLES2::make_current(false);
 	}
-#endif
+#endif // GLES2_ENABLED
 	String appname;
 	if (Engine::get_singleton()->is_editor_hint()) {
 		appname = "Godot.GodotEditor." + String(VERSION_FULL_CONFIG);

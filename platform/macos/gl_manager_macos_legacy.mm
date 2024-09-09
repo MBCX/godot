@@ -30,7 +30,7 @@
 
 #include "gl_manager_macos_legacy.h"
 
-#if defined(MACOS_ENABLED) && defined(GLES3_ENABLED)
+#if defined(MACOS_ENABLED) && (defined(GLES3_ENABLED) || defined(GLES2_ENABLED))
 
 #include <dlfcn.h>
 #include <stdio.h>

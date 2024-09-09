@@ -1989,24 +1989,16 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	{
-		Vector<String> driver_hints_arr;
-		Vector<String> driver_hints_angle_arr;
-		Vector<String> driver_hints_egl_arr;
+		String driver_hints = "";
+		String driver_hints_angle = "";
+		String driver_hints_egl = "";
+		String default_driver = "";
 #ifdef GLES3_ENABLED
-		driver_hints_arr.push_back("opengl3");
-		driver_hints_angle_arr.push_back("opengl3,opengl3_angle"); // macOS, Windows.
-		driver_hints_egl_arr.push_back("opengl3,opengl3_es"); // Linux.
-#endif
-#ifdef GLES2_ENABLED
-		driver_hints_arr.push_back("opengl2");
-		driver_hints_angle_arr.push_back("opengl2,opengl2_angle"); // macOS, Windows.
-		driver_hints_egl_arr.push_back("opengl2,opengl2_es"); // Linux.
-#endif
-		String driver_hints = String(",").join(driver_hints_arr);
-		String driver_hints_angle = String(",").join(driver_hints_angle_arr);
-		String driver_hints_egl = String(",").join(driver_hints_egl_arr);
+		driver_hints = "opengl3";
+		driver_hints_angle = "opengl3,opengl3_angle"; // macOS, Windows.
+		driver_hints_egl = "opengl3,opengl3_es"; // Linux.
 
-		String default_driver = driver_hints.get_slice(",", 0);
+		default_driver = driver_hints.get_slice(",", 0);
 
 		GLOBAL_DEF_RST_NOVAL("rendering/gl_compatibility/driver", default_driver);
 		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_compatibility/driver.windows", PROPERTY_HINT_ENUM, driver_hints_angle), default_driver);
@@ -2020,7 +2012,28 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		GLOBAL_DEF_RST("rendering/gl_compatibility/fallback_to_angle", true);
 		GLOBAL_DEF_RST("rendering/gl_compatibility/fallback_to_native", true);
 		GLOBAL_DEF_RST("rendering/gl_compatibility/fallback_to_gles", true);
+#endif
 
+#ifdef GLES2_ENABLED
+		driver_hints = "opengl2";
+		driver_hints_angle = "opengl2,opengl2_angle"; // macOS, Windows.
+		driver_hints_egl = "opengl2,opengl2_es"; // Linux.
+
+		default_driver = driver_hints.get_slice(",", 0);
+
+		GLOBAL_DEF_RST_NOVAL("rendering/gl_legacy/driver", default_driver);
+		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.windows", PROPERTY_HINT_ENUM, driver_hints_angle), default_driver);
+		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.linuxbsd", PROPERTY_HINT_ENUM, driver_hints_egl), default_driver);
+		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.web", PROPERTY_HINT_ENUM, driver_hints), default_driver);
+		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.android", PROPERTY_HINT_ENUM, driver_hints), default_driver);
+		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.ios", PROPERTY_HINT_ENUM, driver_hints), default_driver);
+		GLOBAL_DEF_RST_NOVAL(PropertyInfo(Variant::STRING, "rendering/gl_legacy/driver.macos", PROPERTY_HINT_ENUM, driver_hints_angle), default_driver);
+
+		GLOBAL_DEF_RST("rendering/gl_legacy/nvidia_disable_threaded_optimization", true);
+		GLOBAL_DEF_RST("rendering/gl_legacy/fallback_to_angle", true);
+		GLOBAL_DEF_RST("rendering/gl_legacy/fallback_to_native", true);
+		GLOBAL_DEF_RST("rendering/gl_legacy/fallback_to_gles", true);
+#endif
 		Array device_blocklist;
 
 #define BLOCK_DEVICE(m_vendor, m_name)      \
@@ -2184,7 +2197,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 #endif
 
 	// And Compatibility next, or first if Vulkan is disabled.
-#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
+#ifdef GLES3_ENABLED
 	if (!renderer_hints.is_empty()) {
 		renderer_hints += ",";
 	}
@@ -2194,15 +2207,29 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 	// Default to Compatibility when using the project manager.
 	if (rendering_driver.is_empty() && rendering_method.is_empty() && project_manager) {
-#if defined(GLES3_ENABLED)
 		rendering_driver = "opengl3";
-#elif
-		rendering_driver = "opengl2";
-#endif
 		rendering_method = "gl_compatibility";
 		default_renderer_mobile = "gl_compatibility";
 	}
 #endif
+
+	// Add Legacy lastly, or next after Compatibility
+#ifdef GLES2_ENABLED
+	if (!renderer_hints.is_empty()) {
+		renderer_hints += ",";
+	}
+	renderer_hints += "gl_legacy";
+	if (default_renderer_mobile.is_empty()) {
+		default_renderer_mobile = "gl_legacy";
+	}
+	// Default to Legacy when using the project manager.
+	if (rendering_driver.is_empty() && rendering_method.is_empty() && project_manager) {
+		rendering_driver = "opengl2";
+		rendering_method = "gl_legacy";
+		default_renderer_mobile = "gl_legacy";
+	}
+#endif
+
 	if (renderer_hints.is_empty()) {
 		ERR_PRINT("No renderers available.");
 	}
@@ -2210,7 +2237,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	if (!rendering_method.is_empty()) {
 		if (rendering_method != "forward_plus" &&
 				rendering_method != "mobile" &&
-				rendering_method != "gl_compatibility") {
+				rendering_method != "gl_compatibility" &&
+				rendering_method != "gl_legacy") {
 			OS::get_singleton()->print("Unknown rendering method '%s', aborting.\nValid options are ",
 					rendering_method.utf8().get_data());
 
@@ -2278,9 +2306,10 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 		// Set a default renderer if none selected. Try to choose one that matches the driver.
 		if (rendering_method.is_empty()) {
-			if (rendering_driver == "opengl3" || rendering_driver == "opengl3_angle" || rendering_driver == "opengl3_es" ||
-					rendering_driver == "opengl2" || rendering_driver == "opengl2_angle" || rendering_driver == "opengl2_es") {
+			if (rendering_driver == "opengl3" || rendering_driver == "opengl3_angle" || rendering_driver == "opengl3_es") {
 				rendering_method = "gl_compatibility";
+			} else if (rendering_driver == "opengl2" || rendering_driver == "opengl2_angle") {
+				rendering_method = "gl_legacy";
 			} else {
 				rendering_method = "forward_plus";
 			}
@@ -2300,11 +2329,15 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			available_drivers.push_back("metal");
 #endif
 		}
-#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
+#ifdef GLES3_ENABLED
 		if (rendering_method == "gl_compatibility") {
 			available_drivers.push_back("opengl3");
 			available_drivers.push_back("opengl3_angle");
 			available_drivers.push_back("opengl3_es");
+		}
+#endif
+#ifdef GLES2_ENABLED
+		if (rendering_method == "gl_legacy") {
 			available_drivers.push_back("opengl2");
 			available_drivers.push_back("opengl2_angle");
 			available_drivers.push_back("opengl2_es");
@@ -2338,6 +2371,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	default_renderer = renderer_hints.get_slice(",", 0);
 	GLOBAL_DEF_RST_BASIC(PropertyInfo(Variant::STRING, "rendering/renderer/rendering_method", PROPERTY_HINT_ENUM, renderer_hints), default_renderer);
 	GLOBAL_DEF_RST_BASIC("rendering/renderer/rendering_method.mobile", default_renderer_mobile);
+
+	// Set the default, even if GLES2 is available.
 	GLOBAL_DEF_RST_BASIC("rendering/renderer/rendering_method.web", "gl_compatibility"); // This is a bit of a hack until we have WebGPU support.
 
 	// Default to ProjectSettings default if nothing set on the command line.
@@ -2348,6 +2383,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	if (rendering_driver.is_empty()) {
 		if (rendering_method == "gl_compatibility") {
 			rendering_driver = GLOBAL_GET("rendering/gl_compatibility/driver");
+		} else if (rendering_method == "gl_legacy") {
+			rendering_driver = GLOBAL_GET("rendering/gl_legacy/driver");
 		} else {
 			rendering_driver = GLOBAL_GET("rendering/rendering_device/driver");
 		}

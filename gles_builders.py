@@ -649,13 +649,10 @@ def build_gles_header(
 
 
 def build_gles3_headers(target, source, env):
-    print("in build_gles3_headers!")
     for x in source:
         build_gles_header(str(x), include="drivers/gles3/shader_gles3.h", class_suffix="GLES3")
 
 def build_gles2_headers(target, source, env):
-    print("in build_gles2_headers!")
-    print(str(source)+":")
     for x in source:
         print("\t"+str(x))
         build_gles_header(str(x), include="drivers/gles2/shader_gles2.h", class_suffix="GLES2", gles_version = 2)

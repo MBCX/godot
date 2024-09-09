@@ -29,10 +29,6 @@ SConscript("coremidi/SCsub")
 SConscript("winmidi/SCsub")
 
 # Graphics drivers
-print("test print:")
-print(env["opengl2"])
-print(env["opengl3"])
-print(env["vulkan"])
 
 if env["vulkan"]:
     SConscript("vulkan/SCsub")

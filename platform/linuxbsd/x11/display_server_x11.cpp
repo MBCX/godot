@@ -49,6 +49,7 @@
 #if defined(GLES2_ENABLED)
 #include "drivers/gles2/rasterizer_gles2.h"
 #endif
+
 #if defined(GLES3_ENABLED)
 #include "drivers/gles3/rasterizer_gles3.h"
 #endif
@@ -6336,7 +6337,7 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 		if (gl_manager->initialize(x11_display) != OK || gl_manager->open_display(x11_display) != OK) {
 			memdelete(gl_manager);
 			gl_manager = nullptr;
-			bool fallback = GLOBAL_GET("rendering/gl_compatibility/fallback_to_gles");
+			bool fallback = GLOBAL_GET("rendering/gl_legacy/fallback_to_gles");
 			if (fallback) {
 				WARN_PRINT("Your video card drivers seem not to support the required OpenGL version, switching to OpenGLES.");
 				rendering_driver = "opengl2_es";
