@@ -1028,12 +1028,12 @@ GLSL_BUILDERS = {
         src_suffix=".glsl",
     ),
     "GLES2_GLSL": env.Builder(
-        action=env.Run(gles_builders.build_gles2_headers, 'Building GLES2 GLSL header: "$TARGET"'),
+        action=env.Run(gles_builders.build_gles2_headers),
         suffix="glsl.gen.h",
         src_suffix=".glsl",
     ),
     "GLES3_GLSL": env.Builder(
-        action=env.Run(gles_builders.build_gles3_headers, 'Building GLES3 GLSL header: "$TARGET"'),
+        action=env.Run(gles_builders.build_gles3_headers),
         suffix="glsl.gen.h",
         src_suffix=".glsl",
     ),

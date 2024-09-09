@@ -78,4 +78,4 @@ void GLManagerANGLE_Windows::window_resize(DisplayServer::WindowID p_window_id, 
 	eglWaitNative(EGL_CORE_NATIVE_ENGINE);
 }
 
-#endif // WINDOWS_ENABLED && (GLES3_ENABLED || GLES2_ENABLED)
+#endif // WINDOWS_ENABLED && (GLES3_ENABLED) || GLES2_ENABLED)

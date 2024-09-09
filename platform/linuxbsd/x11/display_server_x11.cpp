@@ -6357,6 +6357,12 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 			memdelete(gl_manager_egl);
 			gl_manager_egl = nullptr;
 			r_error = ERR_UNAVAILABLE;
+
+			OS::get_singleton()->alert(
+					"Your video card drivers seem not to support the required OpenGL ES 2.0 version.\n\n"
+					"If possible, consider updating your video card drivers.\n\n"
+					"If you recently updated your video card drivers, try rebooting.",
+					"Unable to initialize OpenGL ES video driver");
 			ERR_FAIL_MSG("Could not initialize OpenGLES.");
 		}
 		driver_found = true;
