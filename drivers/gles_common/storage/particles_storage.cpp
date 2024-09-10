@@ -48,8 +48,8 @@ ParticlesStorage *ParticlesStorage::get_singleton() {
 
 ParticlesStorage::ParticlesStorage() {
 	singleton = this;
-	GLES::MaterialStorage *material_storage = GLES::MaterialStorage::get_singleton();
 	/*
+	GLES::MaterialStorage *material_storage = GLES::MaterialStorage::get_singleton();
 		{
 			String global_defines;
 			global_defines += "#define MAX_GLOBAL_SHADER_UNIFORMS 256\n"; // TODO: this is arbitrary for now

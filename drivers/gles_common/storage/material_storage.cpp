@@ -572,7 +572,8 @@ void ShaderData::set_default_texture_parameter(const StringName &p_name, RID p_t
 Variant ShaderData::get_default_parameter(const StringName &p_parameter) const {
 	if (uniforms.has(p_parameter)) {
 		ShaderLanguage::ShaderNode::Uniform uniform = uniforms[p_parameter];
-		Vector<ShaderLanguage::ConstantNode::Value> default_value = uniform.default_value;
+		// Vector<ShaderLanguage::ConstantNode::Value> default_value = uniform.default_value;
+		Vector<ShaderLanguage::Scalar> default_value = uniform.default_value;
 		return ShaderLanguage::constant_value_to_variant(default_value, uniform.type, uniform.array_size, uniform.hint);
 	}
 	return Variant();
@@ -815,7 +816,11 @@ void MaterialData::update_uniform_buffer(const HashMap<StringName, ShaderLanguag
 
 		} else if (E.value.default_value.size()) {
 			//default value
-			_fill_std140_ubo_value(E.value.type, E.value.default_value, data);
+			_fill_std140_ubo_value(
+				E.value.type,
+				Vector<ShaderLanguage::ConstantNode::Value>(), // E.value.default_value,
+				data
+			);
 			//value=E.value.default_value;
 		} else {
 			//zero because it was not provided

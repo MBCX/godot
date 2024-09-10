@@ -53,7 +53,7 @@ _helper_module("core.core_builders", "core/core_builders.py")
 _helper_module("main.main_builders", "main/main_builders.py")
 
 # Local
-import gles3_builders
+import gles_builders
 import glsl_builders
 import methods
 import scu_builders
@@ -1027,13 +1027,13 @@ GLSL_BUILDERS = {
         suffix="glsl.gen.h",
         src_suffix=".glsl",
     ),
-    "GLES2_GLSL": env.Builder(
-        action=env.Run(gles_builders.build_gles2_headers),
+    "GLES3_GLSL": env.Builder(
+        action=env.Run(gles_builders.build_gles3_headers),
         suffix="glsl.gen.h",
         src_suffix=".glsl",
     ),
-    "GLES3_GLSL": env.Builder(
-        action=env.Run(gles_builders.build_gles3_headers),
+    "GLES2_GLSL": env.Builder(
+        action=env.Run(gles_builders.build_gles2_headers),
         suffix="glsl.gen.h",
         src_suffix=".glsl",
     ),
@@ -1138,5 +1138,4 @@ def purge_flaky_files():
 
 
 atexit.register(purge_flaky_files)
-
 methods.clean_cache(env)

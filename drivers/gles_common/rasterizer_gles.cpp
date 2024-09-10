@@ -346,6 +346,14 @@ RasterizerGLES::RasterizerGLES() {
 	}
 }
 
+void RasterizerGLES::gl_end_frame(bool p_swap_buffers) {
+	if (p_swap_buffers) {
+		DisplayServer::get_singleton()->swap_buffers();
+	} else {
+		// TODO: implement gl_end_frame
+	}
+}
+
 RasterizerGLES::~RasterizerGLES() {
 }
 

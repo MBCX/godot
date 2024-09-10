@@ -8,8 +8,6 @@ import os.path
 
 from typing import Optional
 
-from platform_methods import subprocess_main
-
 
 class GLESHeaderStruct:
     def __init__(self):

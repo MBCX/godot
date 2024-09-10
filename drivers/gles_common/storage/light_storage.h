@@ -291,7 +291,7 @@ public:
 	virtual void light_set_max_sdfgi_cascade(RID p_light, uint32_t p_cascade) override {}
 
 	virtual void light_omni_set_shadow_mode(RID p_light, RS::LightOmniShadowMode p_mode) override;
-
+	virtual bool light_instance_is_shadow_visible_at_position(RID p_light, const Vector3 &p_position) const override { return false; };
 	virtual void light_directional_set_shadow_mode(RID p_light, RS::LightDirectionalShadowMode p_mode) override;
 	virtual void light_directional_set_blend_splits(RID p_light, bool p_enable) override;
 	virtual bool light_directional_get_blend_splits(RID p_light) const override;
@@ -596,6 +596,7 @@ public:
 	virtual Vector3 reflection_probe_get_origin_offset(RID p_probe) const override;
 	virtual float reflection_probe_get_origin_max_distance(RID p_probe) const override;
 	virtual bool reflection_probe_renders_shadows(RID p_probe) const override;
+	virtual bool reflection_probe_has_atlas_index(RID p_instance) override;
 
 	/* REFLECTION ATLAS */
 

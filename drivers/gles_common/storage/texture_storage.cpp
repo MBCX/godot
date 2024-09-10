@@ -1389,6 +1389,10 @@ Point2i TextureStorage::render_target_get_position(RID p_render_target) const {
 	return rt->position;
 };
 
+RS::ViewportVRSUpdateMode TextureStorage::render_target_get_vrs_update_mode(RID p_render_target) const {
+	return RS::VIEWPORT_VRS_UPDATE_DISABLED;
+};
+
 void TextureStorage::render_target_set_size(RID p_render_target, int p_width, int p_height, uint32_t p_view_count) {
 	RenderTarget *rt = render_target_owner.get_or_null(p_render_target);
 	ERR_FAIL_NULL(rt);

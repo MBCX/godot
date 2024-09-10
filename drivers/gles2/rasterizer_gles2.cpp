@@ -92,4 +92,12 @@ void RasterizerGLES2::_blit_render_target_to_screen(RID p_render_target, Display
 		canvas->state.canvas_shader.set_conditional(CanvasShaderGLES2::LINEAR_TO_SRGB, false);
 		*/
 }
+
+void RasterizerGLES2::gl_end_frame(bool p_swap_buffers) {
+	if (p_swap_buffers) {
+		DisplayServer::get_singleton()->swap_buffers();
+	} else {
+		// TODO: implement gl_end_frame
+	}
+}
 #endif

@@ -472,7 +472,7 @@ void ProjectDialog::_renderer_selected() {
 				String::utf8("•  ") + TTR("Supports desktop, mobile + web platforms.") +
 				String::utf8("\n•  ") + TTR("Basic 3D graphics capabilities.") +
 				String::utf8("\n•  ") + TTR("Intended for very old devices and maximum compatibility.") +
-				String::utf8("\n•  ") + TTR("Uses OpenGL ES 2.0 / WebGL 1.0 backend.") + +
+				String::utf8("\n•  ") + TTR("Uses OpenGL ES 2.0 / WebGL 1.0 backend.") +
 				String::utf8("\n•  ") + TTR("Fastest rendering of simple scenes.") +
 				String::utf8("\n•  ") + TTR("Limited shader capabilities compared to newer versions."));
 	} else {

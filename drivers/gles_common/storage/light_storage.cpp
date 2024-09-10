@@ -474,6 +474,10 @@ void LightStorage::reflection_probe_set_reflection_mask(RID p_probe, uint32_t p_
 void LightStorage::reflection_probe_set_resolution(RID p_probe, int p_resolution) {
 }
 
+bool LightStorage::reflection_probe_has_atlas_index(RID p_probe) {
+	return false;
+}
+
 AABB LightStorage::reflection_probe_get_aabb(RID p_probe) const {
 	return AABB();
 }
@@ -875,7 +879,7 @@ bool LightStorage::shadow_atlas_update_light(RID p_atlas, RID p_light_instance, 
 }
 
 bool LightStorage::_shadow_atlas_find_shadow(ShadowAtlas *shadow_atlas, int *p_in_quadrants, int p_quadrant_count, int p_current_subdiv, uint64_t p_tick, bool is_omni, int &r_quadrant, int &r_shadow) {
-#ifdef GLES3_ENABLED
+#if defined(GLES3_ENABLED) || defined(GLES2_ENABLED)
 	for (int i = p_quadrant_count - 1; i >= 0; i--) {
 		int qidx = p_in_quadrants[i];
 
@@ -989,8 +993,6 @@ bool LightStorage::_shadow_atlas_find_shadow(ShadowAtlas *shadow_atlas, int *p_i
 
 	return false;
 #endif
-	//GLES2
-	return false;
 }
 
 void LightStorage::_shadow_atlas_invalidate_shadow(ShadowAtlas::Quadrant::Shadow *p_shadow, RID p_atlas, ShadowAtlas *p_shadow_atlas, uint32_t p_quadrant, uint32_t p_shadow_idx) {

@@ -2163,6 +2163,76 @@ void MeshStorage::_update_dirty_multimeshes() {
 	multimesh_dirty_list = nullptr;
 }
 
+RID MeshStorage::_multimesh_allocate() {
+	return RID();
+}
+
+void MeshStorage::_multimesh_initialize(RID p_rid) {}
+
+void MeshStorage::_multimesh_free(RID p_rid) {}
+
+void MeshStorage::_multimesh_allocate_data(RID p_multimesh, int p_instances, RS::MultimeshTransformFormat p_transform_format, bool p_use_colors, bool p_use_custom_data) {}
+
+int MeshStorage::_multimesh_get_instance_count(RID p_multimesh) const {
+	return 0;
+}
+
+void MeshStorage::_multimesh_set_mesh(RID p_multimesh, RID p_mesh) {}
+
+void MeshStorage::_multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform3D &p_transform) {}
+
+void MeshStorage::_multimesh_instance_set_transform_2d(RID p_multimesh, int p_index, const Transform2D &p_transform) {}
+
+void MeshStorage::_multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color) {}
+
+void MeshStorage::_multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_color) {}
+
+void MeshStorage::_multimesh_set_custom_aabb(RID p_multimesh, const AABB &p_aabb) {}
+
+AABB MeshStorage::_multimesh_get_custom_aabb(RID p_multimesh) const {
+	return AABB();
+}
+
+RID MeshStorage::_multimesh_get_mesh(RID p_multimesh) const {
+	return RID();
+}
+
+Transform3D MeshStorage::_multimesh_instance_get_transform(RID p_multimesh, int p_index) const {
+	return Transform3D();
+}
+
+Transform2D MeshStorage::_multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const {
+	return Transform2D();
+}
+
+Color MeshStorage::_multimesh_instance_get_color(RID p_multimesh, int p_index) const {
+	return Color();
+}
+
+Color MeshStorage::_multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const {
+	return Color();
+}
+
+void MeshStorage::_multimesh_set_buffer(RID p_multimesh, const Vector<float> &p_buffer) {}
+
+Vector<float> MeshStorage::_multimesh_get_buffer(RID p_multimesh) const {
+	return Vector<float>();
+}
+
+void MeshStorage::_multimesh_set_visible_instances(RID p_multimesh, int p_visible) {}
+
+int MeshStorage::_multimesh_get_visible_instances(RID p_multimesh) const {
+	return 0;
+}
+
+AABB MeshStorage::_multimesh_get_aabb(RID p_multimesh) const {
+	return AABB();
+}
+
+MeshStorage::MultiMeshInterpolator *MeshStorage::_multimesh_get_interpolator(RID p_multimesh) const {
+	return nullptr;
+}
+
 /* SKELETON API */
 
 RID MeshStorage::skeleton_allocate() {

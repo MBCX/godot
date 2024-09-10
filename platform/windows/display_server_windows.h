@@ -399,6 +399,7 @@ class DisplayServerWindows : public DisplayServer {
 		DRIVER_ID_COMPAT_ANGLE_D3D11 = 1 << 1,
 		DRIVER_ID_RD_VULKAN = 1 << 2,
 		DRIVER_ID_RD_D3D12 = 1 << 3,
+		DRIVER_ID_COMPAT_OPENGL2 = 1 << 4,
 	};
 	static BitField<DriverID> tested_drivers;
 

@@ -163,6 +163,9 @@ void RasterizerSceneGLES::_geometry_instance_dependency_changed(Dependency::Depe
 	}
 }
 
+void RasterizerSceneGLES::lightmaps_set_bicubic_filter(bool p_enable) {
+}
+
 void RasterizerSceneGLES::_geometry_instance_dependency_deleted(const RID &p_dependency, DependencyTracker *p_tracker) {
 	static_cast<RenderGeometryInstance *>(p_tracker->userdata)->_mark_dirty();
 	static_cast<GeometryInstanceGLES *>(p_tracker->userdata)->data->dirty_dependencies = true;

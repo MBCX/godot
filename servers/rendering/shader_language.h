@@ -505,6 +505,14 @@ public:
 			return values;
 		}
 
+		struct Value {
+			bool boolean;
+			signed int sint;
+			unsigned int uint;
+			real_t real;
+
+		};
+
 		ConstantNode() :
 				Node(NODE_TYPE_CONSTANT) {}
 	};

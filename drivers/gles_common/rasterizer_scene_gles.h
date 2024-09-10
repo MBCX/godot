@@ -321,7 +321,7 @@ private:
 		virtual void _mark_dirty() override;
 		virtual void set_use_lightmap(RID p_lightmap_instance, const Rect2 &p_lightmap_uv_scale, int p_lightmap_slice_index) override;
 		virtual void set_lightmap_capture(const Color *p_sh9) override;
-
+		
 		virtual void pair_light_instances(const RID *p_light_instances, uint32_t p_light_instance_count) override;
 		virtual void pair_reflection_probe_instances(const RID *p_reflection_probe_instances, uint32_t p_reflection_probe_instance_count) override {}
 		virtual void pair_decal_instances(const RID *p_decal_instances, uint32_t p_decal_instance_count) override {}
@@ -533,7 +533,7 @@ private:
 	void _fill_render_list(RenderListType p_render_list, const RenderDataGLES *p_render_data, PassMode p_pass_mode, bool p_append = false);
 	void _render_shadows(const RenderDataGLES *p_render_data);
 	void _render_shadow_pass(RID p_light, RID p_shadow_atlas, int p_pass, const PagedArray<RenderGeometryInstance *> &p_instances, const Plane &p_camera_plane = Plane(), float p_lod_distance_multiplier = 0, float p_screen_mesh_lod_threshold = 0.0, RenderingMethod::RenderInfo *p_render_info = nullptr);
-
+	
 	template <PassMode p_pass_mode>
 	_FORCE_INLINE_ void _render_list_template(RenderListParameters *p_params, const RenderDataGLES *p_render_data, uint32_t p_from_element, uint32_t p_to_element, bool p_alpha_pass = false);
 
@@ -750,6 +750,7 @@ public:
 
 	void decals_set_filter(RS::DecalFilter p_filter) override;
 	void light_projectors_set_filter(RS::LightProjectorFilter p_filter) override;
+	void lightmaps_set_bicubic_filter(bool p_enable);
 
 	RasterizerSceneGLES();
 	~RasterizerSceneGLES();

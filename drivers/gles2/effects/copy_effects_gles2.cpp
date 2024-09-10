@@ -84,6 +84,7 @@ CopyShaderGLES2::Uniforms CopyEffectsGLES2::_to_shader_uniform(ShaderUniforms p_
 			ERR_FAIL_V_MSG(CopyShaderGLES2::Uniforms::COLOR_IN, "ShaderUniforms::LAYER and ShaderUniforms::LOD haven't been implemented for GLES2 yet.");
 		}
 	}
+	return CopyShaderGLES2::Uniforms::SOURCE_SECTION;
 }
 
 bool CopyEffectsGLES2::_bind_shader(ShaderVariants p_variant) {

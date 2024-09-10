@@ -262,6 +262,42 @@ private:
 	_FORCE_INLINE_ void _multimesh_mark_dirty(MultiMesh *multimesh, int p_index, bool p_aabb);
 	_FORCE_INLINE_ void _multimesh_mark_all_dirty(MultiMesh *multimesh, bool p_data, bool p_aabb);
 	_FORCE_INLINE_ void _multimesh_re_create_aabb(MultiMesh *multimesh, const float *p_data, int p_instances);
+	
+	virtual RID _multimesh_allocate() override;
+	virtual void _multimesh_initialize(RID p_rid) override;
+	virtual void _multimesh_free(RID p_rid) override;
+
+	virtual void _multimesh_allocate_data(RID p_multimesh, int p_instances, RS::MultimeshTransformFormat p_transform_format, bool p_use_colors = false, bool p_use_custom_data = false) override;
+
+	virtual int _multimesh_get_instance_count(RID p_multimesh) const override;
+
+	virtual void _multimesh_set_mesh(RID p_multimesh, RID p_mesh) override;
+	virtual void _multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform3D &p_transform) override;
+	virtual void _multimesh_instance_set_transform_2d(RID p_multimesh, int p_index, const Transform2D &p_transform) override;
+	virtual void _multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color) override;
+	virtual void _multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_color) override;
+
+	virtual void _multimesh_set_custom_aabb(RID p_multimesh, const AABB &p_aabb) override;
+	virtual AABB _multimesh_get_custom_aabb(RID p_multimesh) const override;
+
+	virtual RID _multimesh_get_mesh(RID p_multimesh) const override;
+
+	virtual Transform3D _multimesh_instance_get_transform(RID p_multimesh, int p_index) const override;
+	virtual Transform2D _multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const override;
+	virtual Color _multimesh_instance_get_color(RID p_multimesh, int p_index) const override;
+	virtual Color _multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const override;
+
+	virtual void _multimesh_set_buffer(RID p_multimesh, const Vector<float> &p_buffer) override;
+	virtual Vector<float> _multimesh_get_buffer(RID p_multimesh) const override;
+
+	virtual void _multimesh_set_visible_instances(RID p_multimesh, int p_visible) override;
+	virtual int _multimesh_get_visible_instances(RID p_multimesh) const override;
+
+	virtual AABB _multimesh_get_aabb(RID p_multimesh) const override;
+
+	// Multimesh is responsible for allocating / destroying a MultiMeshInterpolator object.
+	// This allows shared functionality for interpolation across backends.
+	virtual MultiMeshInterpolator *_multimesh_get_interpolator(RID p_multimesh) const override;
 
 	/* Skeleton */
 

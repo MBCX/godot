@@ -98,7 +98,7 @@ public:
 
 	void end_viewport(bool p_swap_buffers);
 	void end_frame(bool p_swap_buffers);
-
+	void gl_end_frame(bool p_swap_buffers);
 	void finalize();
 
 	virtual bool is_gles3() = 0;

@@ -24,6 +24,7 @@ public:
 	}
 
 	virtual bool is_gles3() override { return false; }
+	virtual void gl_end_frame(bool p_swap_buffers) override;
 };
 
 #endif // GLES2_ENABLED
