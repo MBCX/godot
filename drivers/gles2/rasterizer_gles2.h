@@ -8,9 +8,12 @@
 class RasterizerGLES2 : public RasterizerGLES {
 protected:
 	virtual void _blit_render_target_to_screen(RID p_render_target, DisplayServer::WindowID p_screen, const Rect2 &p_screen_rect, uint32_t p_layer, bool p_first = true) override;
+	static bool gles_over_gl;
+	static RasterizerGLES2 *singleton;
 
 public:
 	RasterizerGLES2();
+	~RasterizerGLES2();
 
 	static RendererCompositor *_create_current() {
 		return memnew(RasterizerGLES2);
@@ -25,6 +28,12 @@ public:
 
 	virtual bool is_gles3() override { return false; }
 	virtual void gl_end_frame(bool p_swap_buffers) override;
+	void initialize();
+	void finalize();
+	void begin_frame(double frame_step);
+	void end_frame(bool p_swap_buffers);
+	void clear_depth(float p_depth);
+	void blit_render_targets_to_screen(DisplayServer::WindowID p_screen, const BlitToScreen *p_render_targets, int p_amount);
 };
 
 #endif // GLES2_ENABLED

@@ -6365,7 +6365,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	}
 
 	if (rendering_driver == "opengl2_angle") {
-		gl_manager_angle = memnew(GLManagerANGLE_Windows);
+		gl_manager_angle = memnew(GLManagerANGLE_Windows(false));
 		tested_drivers.set_flag(DRIVER_ID_COMPAT_ANGLE_D3D11);
 		// tested_drivers.set_flag(DRIVER_ID_COMPAT_ANGLE_D3D9);
 
@@ -6385,6 +6385,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 				ERR_FAIL_MSG("Could not initialize ANGLE OpenGL.");
 			}
 		}
+		RasterizerGLES2::make_current(false);
 	}
 
 	if (rendering_driver == "opengl2") {
@@ -6397,10 +6398,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 			r_error = ERR_UNAVAILABLE;
 			ERR_FAIL_MSG("Could not initialize native OpenGL.");
 		}
-	}
-
-	if (rendering_driver == "opengl2" || rendering_driver == "opengl2_angle") {
-		RasterizerGLES2::make_current(false);
+		RasterizerGLES2::make_current(true);
 	}
 #endif // GLES2_ENABLED
 	String appname;
@@ -6541,17 +6539,21 @@ DisplayServer *DisplayServerWindows::create_func(const String &p_rendering_drive
 			String executable_name = OS::get_singleton()->get_executable_path().get_file();
 			OS::get_singleton()->alert(
 					vformat("Your video card drivers seem not to support the required %s version.\n\n"
-							"If possible, consider updating your video card drivers or using the OpenGL 3 driver.\n\n"
-							"You can enable the OpenGL 3 driver by starting the engine from the\n"
-							"command line with the command:\n\n    \"%s\" --rendering-driver opengl3\n\n"
+							"If possible, consider updating your video card drivers or using either the OpenGL 3 driver or OpenGL 2 driver.\n\n"
+							"You can enable either driver by starting the engine from the\n"
+							"command line with the command:\n\n    \"%s\" --rendering-driver opengl3 for the OpenGL 3 driver, or\n"
+							"with the command:\n\n    \"%s\" --rendering-driver opengl2 for the OpenGL 2 driver.\n\n"
 							"If you have recently updated your video card drivers, try rebooting.",
 							String(" or ").join(drivers),
-							executable_name),
+							executable_name, executable_name),
 					"Unable to initialize video driver");
 		} else {
 			Vector<String> drivers;
 			if (tested_drivers.has_flag(DRIVER_ID_COMPAT_OPENGL3)) {
 				drivers.push_back("OpenGL 3.3");
+			}
+			if (tested_drivers.has_flag(DRIVER_ID_COMPAT_OPENGL2)) {
+				drivers.push_back("OpenGL 2.0");
 			}
 			if (tested_drivers.has_flag(DRIVER_ID_COMPAT_ANGLE_D3D11)) {
 				drivers.push_back("Direct3D 11");

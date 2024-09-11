@@ -32,6 +32,10 @@
 
 #include "material_storage.h"
 #include "drivers/gles2/shaders/canvas.glsl.gen.h"
+#include "drivers/gles2/shaders/sky.glsl.gen.h"
+#include "drivers/gles2/shaders/scene.glsl.gen.h"
+#include "drivers/gles2/shaders/particles.glsl.gen.h"
+#include "drivers/gles2/shaders/effects/cubemap_filter.glsl.gen.h"
 #include "drivers/gles_common/storage/texture_storage.h"
 
 using namespace GLES;
@@ -208,18 +212,19 @@ MaterialStorageGLES2::MaterialStorageGLES2() {
 	material_data_request_func[RS::SHADER_FOG] = nullptr;
 
 	shaders.canvas_shader = memnew(CanvasShaderGLES2);
-	//ShaderGLES *sky_shader = nullptr;
-	//ShaderGLES *scene_shader = nullptr;
-	//ShaderGLES *cubemap_filter_shader = nullptr;
+	//shaders.sky_shader = memnew(SkyShaderGLES2);
+	shaders.scene_shader = memnew(SceneShaderGLES2);
+	shaders.particles_process_shader = memnew(ParticlesShaderGLES2);
+	shaders.cubemap_filter_shader = memnew(CubemapFilterShaderGLES2);
 	//ShaderGLES *particles_process_shader = nullptr;
 }
 
 MaterialStorageGLES2::~MaterialStorageGLES2() {
 	memdelete(shaders.canvas_shader);
 	//memdelete(shaders.sky_shader);
-	//memdelete(shaders.scene_shader);
-	//memdelete(shaders.cubemap_filter_shader);
-	//memdelete(shaders.particles_process_shader);
+	memdelete(shaders.scene_shader);
+	memdelete(shaders.particles_process_shader);
+	memdelete(shaders.cubemap_filter_shader);
 }
 
 void MaterialStorageGLES2::_update_global_shader_uniforms() {

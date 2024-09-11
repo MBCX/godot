@@ -22,7 +22,7 @@ if "GLES2_GLSL" in env["BUILDERS"]:
     build_gles2_headers(0, glsl_files, 0)
 
     for f in glsl_files:
-        print(f)
+        # print(f)
         env.GLES2_GLSL(f)
 
 SConscript("effects/SCsub")

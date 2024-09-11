@@ -2739,7 +2739,7 @@ void SkyShaderData::set_code(const String &p_code) {
 	Error err = MaterialStorage::get_singleton()->shaders.compiler_sky.compile(RS::SHADER_SKY, code, &actions, path, gen_code);
 	ERR_FAIL_COND_MSG(err != OK, "Shader compilation failed.");
 
-	if (version.is_null()) {
+	if (!version.is_valid()) {
 		version = MaterialStorage::get_singleton()->shaders.sky_shader->version_create();
 	}
 

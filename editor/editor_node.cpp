@@ -3173,7 +3173,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 					// Same as above comment, but for the web platform,
 					// but this time prioritise WebGL 2 instead of 1.
-					ProjectSettings::get_singleton()->set("rendering/renderer/rendering_method.web", "gl_compatibility");
+					ProjectSettings::get_singleton()->set("rendering/renderer/rendering_method.web", renderer_request);
 				}
 			} else if (renderer_request == "forward_plus") {
 				// Use the equivalent mobile rendering method. This prevents the rendering method from staying

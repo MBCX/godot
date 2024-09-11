@@ -3252,7 +3252,6 @@ RasterizerCanvasGLES2::RasterizerCanvasGLES2() {
 	state.canvas_shader = static_cast<CanvasShaderGLES2 *>(material_storage->shaders.canvas_shader);
 	state.canvas_shader->initialize(global_defines, 1);
 	data.canvas_shader_default_version = state.canvas_shader->version_create();
-
 	default_canvas_texture = texture_storage->canvas_texture_allocate();
 	texture_storage->canvas_texture_initialize(default_canvas_texture);
 

@@ -51,7 +51,7 @@
 #include "storage/utilities.h"
 
 class RasterizerGLES : public RendererCompositor {
-private:
+public:
 	uint64_t frame = 1;
 	float delta = 0;
 

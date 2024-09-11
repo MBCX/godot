@@ -536,6 +536,11 @@ void ProjectDialog::ok_pressed() {
 			project_features.push_back("GL Compatibility");
 			// Also change the default rendering method for the mobile override.
 			initial_settings["rendering/renderer/rendering_method.mobile"] = "gl_compatibility";
+		} else if (renderer_type == "gl_legacy") {
+			project_features.push_back("GL Legacy");
+			// Also change the default rendering method for the mobile override.
+			initial_settings["rendering/renderer/rendering_method.mobile"] = "gl_legacy";
+			initial_settings["rendering/renderer/rendering_method.web"] = "gl_legacy";
 		} else {
 			WARN_PRINT("Unknown renderer type. Please report this as a bug on GitHub.");
 		}
@@ -942,6 +947,9 @@ ProjectDialog::ProjectDialog() {
 	rendering_device_supported = DisplayServer::can_create_rendering_device();
 
 	if (!rendering_device_supported) {
+		// Still default to GLES3 even when GLES2
+		// is available.
+		// Unless overitten via command line.
 		default_renderer_type = "gl_compatibility";
 	}
 

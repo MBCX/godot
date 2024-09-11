@@ -44,22 +44,63 @@ ConfigGLES2::ConfigGLES2() {
 
 	// Populate the list of all available extensions
 
-	//FIXME: opengl complains about this glGetString using an invalid enum
-	const GLubyte *extension_string = glGetString(GL_EXTENSIONS);
-	if (extension_string != nullptr) {
-		// Print the extensions
-		const GLubyte *start = extension_string;
-		const GLubyte *end = extension_string + strlen((const char *)extension_string);
-		const GLubyte *current = start;
+	// Instead of using GL_EXTENSIONS, which is deprecated in OpenGL ES 2.0,
+	// we'll use glGetStringi with GL_NUM_EXTENSIONS.
 
-		while (current < end) {
-			if (*current == ' ' || *current == '\0') {
-				extensions.insert(String((const char *)start, (int)(current - start)));
-				start = current + 1;
-			}
-			current++;
+    // Check if OpenGL functions are loaded
+	if (!glGetError) {
+		ERR_PRINT("OpenGL functions not loaded. Ensure load_gl_functions() is called after context creation.");
+		return;
+	}
+
+	// Try to make a simple OpenGL call
+	glGetError(); // Clear any existing error
+	glViewport(0, 0, 800, 600); // A simple call that shouldn't fail
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR) {
+		ERR_PRINT("Basic OpenGL call failed. Error code: " + itos(error));
+		return;
+	}
+
+	// Safely get number of extensions
+	GLint num_extensions = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
+	if (glGetError() != GL_NO_ERROR || num_extensions < 0) {
+		ERR_PRINT("Failed to get number of OpenGL extensions");
+		return;
+	}
+
+	for (GLint i = 0; i < num_extensions; i++) {
+		const GLubyte *extension = glGetStringi(GL_EXTENSIONS, i);
+		if (extension) {
+			extensions.insert((const char *)extension);
 		}
 	}
+
+	// Now we have all the extensions, let's print them
+	for (const String &ext : extensions) {
+		print_line(vformat("Extension available: %s", ext));
+	}
+
+	// TODO: Check if we have all the extensions we need
+	// You can add checks for specific extensions here
+	/*
+	const char *required_extensions[] = {
+		"GL_OES_vertex_array_object",
+		"GL_OES_depth_texture",
+		"GL_ARB_texture_compression_bptc",
+		"EXT_texture_compression_bptc",
+		"GL_KHR_texture_compression_astc",
+		"GL_OES_texture_compression_astc",
+		"GL_KHR_texture_compression_astc_ldr",
+		"GL_KHR_texture_compression_astc_hdr",
+		"GL_KHR_texture_compression_astc_sliced_3d",
+		"GL_EXT_texture_compression_rgtc",
+		"GL_ARB_texture_compression_rgtc",
+		"EXT_texture_compression_rgtc",
+	};
+	*/
+
 	/*
 	//glGetString(GL_EXTENSIONS) is deprecated in gles3, use the following
 	if (gles_3) {
@@ -74,11 +115,6 @@ ConfigGLES2::ConfigGLES2() {
 		}
 	}
 	*/
-
-	//TODO: check if we correctly get all the extensions
-	for (auto a : extensions) {
-		print_line(vformat("Extension available: %s", a));
-	}
 
 	bptc_supported = extensions.has("GL_ARB_texture_compression_bptc") || extensions.has("EXT_texture_compression_bptc");
 	astc_supported = extensions.has("GL_KHR_texture_compression_astc") || extensions.has("GL_OES_texture_compression_astc") || extensions.has("GL_KHR_texture_compression_astc_ldr") || extensions.has("GL_KHR_texture_compression_astc_hdr");
