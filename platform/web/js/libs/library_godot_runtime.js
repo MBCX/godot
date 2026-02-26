@@ -52,46 +52,76 @@ const GodotRuntime = {
 		 * Memory
 		 */
 		malloc: function (p_size) {
-			return _malloc(p_size);
+			// To make sure linters and IDEs are happy.
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
+
+			if (isWasm64) {
+				return _malloc(BigInt(p_size));
+			}
+			return _malloc(Number(p_ptr));
 		},
 
 		free: function (p_ptr) {
-			_free(p_ptr);
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
+
+			if (isWasm64) {
+				_free(BigInt(p_ptr));
+			} else {
+				_free(Number(p_ptr));
+			}
 		},
 
 		getHeapValue: function (p_ptr, p_type) {
-			return getValue(p_ptr, p_type);
+			return getValue(Number(p_ptr), p_type);
 		},
 
 		setHeapValue: function (p_ptr, p_value, p_type) {
-			setValue(p_ptr, p_value, p_type);
+			setValue(Number(p_ptr), p_value, p_type);
 		},
 
 		heapSub: function (p_heap, p_ptr, p_len) {
 			const bytes = p_heap.BYTES_PER_ELEMENT;
-			return p_heap.subarray(p_ptr / bytes, p_ptr / bytes + p_len);
+			const ptr = Number(p_ptr);
+			const len = Number(p_len);
+			return p_heap.subarray(ptr / bytes, ptr / bytes + len);
 		},
 
 		heapSlice: function (p_heap, p_ptr, p_len) {
 			const bytes = p_heap.BYTES_PER_ELEMENT;
-			return p_heap.slice(p_ptr / bytes, p_ptr / bytes + p_len);
+			const ptr = Number(p_ptr);
+			const len = Number(p_len);
+			return p_heap.slice(ptr / bytes, ptr / bytes + len);
 		},
 
 		heapCopy: function (p_dst, p_src, p_ptr) {
 			const bytes = p_src.BYTES_PER_ELEMENT;
-			return p_dst.set(p_src, p_ptr / bytes);
+			const ptr = Number(p_ptr);
+			return p_dst.set(p_src, ptr / bytes);
 		},
 
 		/*
 		 * Strings
 		 */
 		parseString: function (p_ptr) {
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
+
+			if (isWasm64) {
+				return UTF8ToString(Number(p_ptr));
+			}
 			return UTF8ToString(p_ptr);
 		},
 
 		parseStringArray: function (p_ptr, p_size) {
 			const strings = [];
-			const ptrs = GodotRuntime.heapSub(HEAP32, p_ptr, p_size); // TODO wasm64
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
+			let ptrs = undefined;
+
+			if (isWasm64) {
+				ptrs = GodotRuntime.heapSub(HEAPU64, p_ptr, p_size);
+			} else {
+				ptrs = GodotRuntime.heapSub(HEAP32, p_ptr, p_size);
+			}
+
 			ptrs.forEach(function (ptr) {
 				strings.push(GodotRuntime.parseString(ptr));
 			});
@@ -105,28 +135,40 @@ const GodotRuntime = {
 		allocString: function (p_str) {
 			const length = GodotRuntime.strlen(p_str) + 1;
 			const c_str = GodotRuntime.malloc(length);
-			stringToUTF8(p_str, c_str, length);
+			// Cast c_str to Number here just in case stringToUTF8 expects it
+			stringToUTF8(p_str, Number(c_str), length);
 			return c_str;
 		},
 
 		allocStringArray: function (p_strings) {
 			const size = p_strings.length;
-			const c_ptr = GodotRuntime.malloc(size * 4);
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
+			const c_ptr = GodotRuntime.malloc(size * (isWasm64 ? 8 : 4));
 			for (let i = 0; i < size; i++) {
-				HEAP32[(c_ptr >> 2) + i] = GodotRuntime.allocString(p_strings[i]);
+				if (isWasm64) {
+					// Divide by 8n for 64-bit alignment, cast result to Number for array index
+					HEAPU64[Number(c_ptr / 8n) + i] = BigInt(GodotRuntime.allocString(p_strings[i]));
+				} else {
+					HEAP32[(c_ptr >> 2) + i] = GodotRuntime.allocString(p_strings[i]);
+				}
 			}
 			return c_ptr;
 		},
 
 		freeStringArray: function (p_ptr, p_len) {
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
 			for (let i = 0; i < p_len; i++) {
-				GodotRuntime.free(HEAP32[(p_ptr >> 2) + i]);
+				if (isWasm64) {
+					GodotRuntime.free(HEAPU64[Number(p_ptr / 8n) + i]);
+				} else {
+					GodotRuntime.free(HEAP32[(p_ptr >> 2) + i]);
+				}
 			}
 			GodotRuntime.free(p_ptr);
 		},
 
 		stringToHeap: function (p_str, p_ptr, p_len) {
-			return stringToUTF8Array(p_str, HEAP8, p_ptr, p_len);
+			return stringToUTF8Array(p_str, HEAP8, Number(p_ptr), Number(p_len));
 		},
 	},
 };

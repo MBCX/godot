@@ -34,17 +34,25 @@ const GodotWebSocket = {
 	$GodotWebSocket: {
 		// Connection opened, report selected protocol
 		_onopen: function (p_id, callback, event) {
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
 			const ref = IDHandler.get(p_id);
 			if (!ref) {
 				return; // Godot object is gone.
 			}
 			const c_str = GodotRuntime.allocString(ref.protocol);
-			callback(c_str);
+
+			if (isWasm64) {
+				callback(BigInt(c_str));
+			} else {
+				callback(c_str);
+			}
+
 			GodotRuntime.free(c_str);
 		},
 
 		// Message received, report content and type (UTF8 vs binary)
 		_onmessage: function (p_id, callback, event) {
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
 			const ref = IDHandler.get(p_id);
 			if (!ref) {
 				return; // Godot object is gone.
@@ -65,8 +73,13 @@ const GodotWebSocket = {
 			}
 			const len = buffer.length * buffer.BYTES_PER_ELEMENT;
 			const out = GodotRuntime.malloc(len);
-			HEAPU8.set(buffer, out);
-			callback(out, len, is_string);
+			
+			HEAPU8.set(buffer, Number(out));
+			if (isWasm64) {
+				callback(BigInt(out), len, is_string);
+			} else {
+				callback(out, len, is_string);
+			}
 			GodotRuntime.free(out);
 		},
 
@@ -81,12 +94,17 @@ const GodotWebSocket = {
 
 		// Connection is closed, this is always fired. Report close code, reason, and clean status.
 		_onclose: function (p_id, callback, event) {
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
 			const ref = IDHandler.get(p_id);
 			if (!ref) {
 				return; // Godot object is gone.
 			}
 			const c_str = GodotRuntime.allocString(event.reason);
-			callback(event.code, c_str, event.wasClean ? 1 : 0);
+			if (isWasm64) {
+				callback(event.code, BigInt(c_str), event.wasClean ? 1 : 0);
+			} else {
+				callback(event.code, c_str, event.wasClean ? 1 : 0);
+			}
 			GodotRuntime.free(c_str);
 		},
 

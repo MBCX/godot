@@ -585,12 +585,14 @@ const GodotInput = {
 			}
 			const rect = canvas.getBoundingClientRect();
 			const touches = evt.changedTouches;
+			const c_coords = Number(coords);
+            const c_ids = Number(ids);
 			for (let i = 0; i < touches.length; i++) {
 				const touch = touches[i];
 				const pos = GodotInput.computePosition(touch, rect);
-				GodotRuntime.setHeapValue(coords + (i * 2) * 8, pos[0], 'double');
-				GodotRuntime.setHeapValue(coords + (i * 2 + 1) * 8, pos[1], 'double');
-				GodotRuntime.setHeapValue(ids + i * 4, touch.identifier, 'i32');
+				GodotRuntime.setHeapValue(c_coords + (i * 2) * 8, pos[0], 'double');
+				GodotRuntime.setHeapValue(c_coords + (i * 2 + 1) * 8, pos[1], 'double');
+				GodotRuntime.setHeapValue(c_ids + i * 4, touch.identifier, 'i32');
 			}
 			func(type, touches.length);
 			if (evt.cancelable) {
@@ -679,18 +681,20 @@ const GodotInput = {
 		}
 		const btns = sample.buttons;
 		const btns_len = btns.length < 16 ? btns.length : 16;
+		const c_btns = Number(r_btns);
 		for (let i = 0; i < btns_len; i++) {
-			GodotRuntime.setHeapValue(r_btns + (i << 2), btns[i], 'float');
+			GodotRuntime.setHeapValue(c_btns + (i << 2), btns[i], 'float');
 		}
 		GodotRuntime.setHeapValue(r_btns_num, btns_len, 'i32');
 		const axes = sample.axes;
 		const axes_len = axes.length < 10 ? axes.length : 10;
+		const c_axes = Number(r_axes);
 		for (let i = 0; i < axes_len; i++) {
-			GodotRuntime.setHeapValue(r_axes + (i << 2), axes[i], 'float');
+			GodotRuntime.setHeapValue(c_axes + (i << 2), axes[i], 'float');
 		}
-		GodotRuntime.setHeapValue(r_axes_num, axes_len, 'i32');
+		GodotRuntime.setHeapValue(Number(r_axes_num), axes_len, 'i32');
 		const is_standard = sample.standard ? 1 : 0;
-		GodotRuntime.setHeapValue(r_standard, is_standard, 'i32');
+		GodotRuntime.setHeapValue(Number(r_standard), is_standard, 'i32');
 		return 0;
 	},
 

@@ -1180,8 +1180,15 @@ const _GodotAudio = {
 				return;
 			}
 			const sampleNodeIdPtr = GodotRuntime.allocString(pSampleNodeId);
-			GodotAudio.sampleFinishedCallback(sampleNodeIdPtr);
-			GodotRuntime.free(sampleNodeIdPtr);
+			const isWasm64 = Number("{{{ MEMORY64 }}}") > 0;
+
+			if (isWasm64) {
+				GodotAudio.sampleFinishedCallback(BigInt(sampleNodeIdPtr));
+				GodotRuntime.free(BigInt(sampleNodeIdPtr));
+			} else {
+				GodotAudio.sampleFinishedCallback(sampleNodeIdPtr);
+				GodotRuntime.free(sampleNodeIdPtr);
+			}
 		},
 
 		// `Bus` class
@@ -1650,7 +1657,7 @@ const _GodotAudio = {
 		/** @type {Float32Array} */
 		const subRight = GodotRuntime.heapSub(
 			HEAPF32,
-			framesPtr + framesTotal * BYTES_PER_FLOAT32,
+			Number(framesPtr) + framesTotal * BYTES_PER_FLOAT32,
 			framesTotal
 		);
 
@@ -2161,18 +2168,21 @@ const GodotAudioWorklet = {
 		p_expected,
 		p_timeout
 	) {
-		Atomics.wait(HEAP32, (p_state >> 2) + p_idx, p_expected, p_timeout);
-		return Atomics.load(HEAP32, (p_state >> 2) + p_idx);
+		const index = (Number(p_state) / 4) + p_idx;
+		Atomics.wait(HEAP32, index, p_expected, p_timeout);
+		return Atomics.load(HEAP32, index);
 	},
 
 	godot_audio_worklet_state_add__sig: 'iiii',
 	godot_audio_worklet_state_add: function (p_state, p_idx, p_value) {
-		return Atomics.add(HEAP32, (p_state >> 2) + p_idx, p_value);
+		const index = (Number(p_state) / 4) + p_idx;
+		return Atomics.add(HEAP32, index, p_value);
 	},
 
 	godot_audio_worklet_state_get__sig: 'iii',
 	godot_audio_worklet_state_get: function (p_state, p_idx) {
-		return Atomics.load(HEAP32, (p_state >> 2) + p_idx);
+		const index = (Number(p_state) / 4) + p_idx;
+		return Atomics.load(HEAP32, index);
 	},
 };
 
