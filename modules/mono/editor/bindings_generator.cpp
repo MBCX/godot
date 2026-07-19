@@ -39,7 +39,6 @@
 
 #include "core/config/engine.h"
 #include "core/core_constants.h"
-#include "core/io/compression.h"
 #include "core/io/dir_access.h"
 #include "core/io/file_access.h"
 #include "core/os/os.h"
@@ -148,6 +147,13 @@ const Vector<String> prop_allowed_inherited_member_hiding = {
 	"GltfAccessor.GetType",
 	"GltfAccessor.MethodName.GetType",
 };
+
+// We force the following enums to always add the 'Enum' suffix which is usually
+// a disambiguator when there are other members in the class with the same name.
+// This avoids hiding the enum when the property is declared in a derived class,
+// and the need for the 'new' keyword. It can also be used to avoid breaking compat
+// later if a new member is added with the same name as the enum.
+const Vector<String> enums_with_forced_suffix = {};
 
 void BindingsGenerator::TypeInterface::postsetup_enum_type(BindingsGenerator::TypeInterface &r_enum_itype) {
 	// C interface for enums is the same as that of 'uint32_t'. Remember to apply
@@ -2222,7 +2228,7 @@ Error BindingsGenerator::_generate_cs_type(const TypeInterface &itype, const Str
 				output.append(CS_SINGLETON_INSTANCE_SUFFIX);
 			}
 		} else {
-			ERR_PRINT("Base type '" + itype.base_name.operator String() + "' does not exist, for class '" + itype.name + "'.");
+			ERR_PRINT("Base type '" + itype.base_name.string() + "' does not exist, for class '" + itype.name + "'.");
 			return ERR_INVALID_DATA;
 		}
 	}
@@ -2320,7 +2326,7 @@ Error BindingsGenerator::_generate_cs_type(const TypeInterface &itype, const Str
 	for (const PropertyInterface &iprop : itype.properties) {
 		Error prop_err = _generate_cs_property(itype, iprop, output);
 		ERR_FAIL_COND_V_MSG(prop_err != OK, prop_err,
-				"Failed to generate property '" + iprop.cname.operator String() +
+				"Failed to generate property '" + iprop.cname.string() +
 						"' for class '" + itype.name + "'.");
 	}
 
@@ -4256,12 +4262,12 @@ bool BindingsGenerator::_populate_object_type_interfaces() {
 
 		// Populate signals
 
-		const AHashMap<StringName, MethodInfo> &signal_map = class_info->signal_map;
+		const AHashMap<StringName, const MethodInfo *> &signal_map = class_info->gdtype->get_signal_map(true);
 
-		for (const KeyValue<StringName, MethodInfo> &E : signal_map) {
+		for (const KeyValue<StringName, const MethodInfo *> &E : signal_map) {
 			SignalInterface isignal;
 
-			const MethodInfo &method_info = E.value;
+			const MethodInfo &method_info = *E.value;
 
 			if (method_info.name.begins_with("_")) {
 				// Signals starting with an underscore are internal and not meant to be exposed.
@@ -4352,27 +4358,24 @@ bool BindingsGenerator::_populate_object_type_interfaces() {
 		List<String> constants;
 		ClassDB::get_integer_constant_list(type_cname, &constants, true);
 
-		const HashMap<StringName, ClassDB::ClassInfo::EnumInfo> &enum_map = class_info->enum_map;
+		const AHashMap<StringName, const GDType::EnumInfo *> &enum_map = class_info->gdtype->get_enum_map(true);
 
-		for (const KeyValue<StringName, ClassDB::ClassInfo::EnumInfo> &E : enum_map) {
-			StringName enum_proxy_cname = E.key;
-			String enum_proxy_name = pascal_to_pascal_case(enum_proxy_cname.operator String());
-			if (itype.find_property_by_proxy_name(enum_proxy_name) || itype.find_method_by_proxy_name(enum_proxy_name) || itype.find_signal_by_proxy_name(enum_proxy_name)) {
+		for (const KeyValue<StringName, const GDType::EnumInfo *> &kv : enum_map) {
+			StringName enum_proxy_cname = kv.key;
+			String enum_proxy_name = pascal_to_pascal_case(enum_proxy_cname.string());
+			if (enums_with_forced_suffix.has(itype.proxy_name + "." + enum_proxy_name) || itype.find_property_by_proxy_name(enum_proxy_name) || itype.find_method_by_proxy_name(enum_proxy_name) || itype.find_signal_by_proxy_name(enum_proxy_name)) {
 				// In case the enum name conflicts with other PascalCase members,
 				// we append 'Enum' to the enum name in those cases.
 				// We have several conflicts between enums and PascalCase properties.
 				enum_proxy_name += "Enum";
 				enum_proxy_cname = StringName(enum_proxy_name);
 			}
-			EnumInterface ienum(enum_proxy_cname, enum_proxy_name, E.value.is_bitfield);
-			const List<StringName> &enum_constants = E.value.constants;
-			for (const StringName &constant_cname : enum_constants) {
-				String constant_name = constant_cname.operator String();
-				int64_t *value = class_info->constant_map.getptr(constant_cname);
-				ERR_FAIL_NULL_V(value, false);
-				constants.erase(constant_name);
+			EnumInterface ienum(enum_proxy_cname, enum_proxy_name, kv.value->is_bitfield);
+			for (const KeyValue<StringName, int64_t> &kv_case : kv.value->values) {
+				String constant_name = kv_case.key.string();
+				constants.erase(kv_case.key);
 
-				ConstantInterface iconstant(constant_name, snake_to_pascal_case(constant_name, true), *value);
+				ConstantInterface iconstant(constant_name, snake_to_pascal_case(constant_name, true), kv_case.value);
 
 				iconstant.const_doc = nullptr;
 				for (int i = 0; i < itype.class_doc->constants.size(); i++) {
@@ -4405,7 +4408,7 @@ bool BindingsGenerator::_populate_object_type_interfaces() {
 
 			TypeInterface enum_itype;
 			enum_itype.is_enum = true;
-			enum_itype.name = itype.name + "." + String(E.key);
+			enum_itype.name = itype.name + "." + String(kv.key);
 			enum_itype.cname = StringName(enum_itype.name);
 			enum_itype.proxy_name = itype.proxy_name + "." + enum_proxy_name;
 			TypeInterface::postsetup_enum_type(enum_itype);
@@ -4413,7 +4416,7 @@ bool BindingsGenerator::_populate_object_type_interfaces() {
 		}
 
 		for (const String &constant_name : constants) {
-			int64_t *value = class_info->constant_map.getptr(StringName(constant_name));
+			const int64_t *value = class_info->gdtype->get_integer_constant_map(true).getptr(StringName(constant_name));
 			ERR_FAIL_NULL_V(value, false);
 
 			String constant_proxy_name = snake_to_pascal_case(constant_name, true);
@@ -5099,7 +5102,7 @@ void BindingsGenerator::_populate_global_constants() {
 			iconstant.const_doc = const_doc;
 
 			if (enum_name != StringName()) {
-				EnumInterface ienum(enum_name, pascal_to_pascal_case(enum_name.operator String()), CoreConstants::is_global_constant_bitfield(i));
+				EnumInterface ienum(enum_name, pascal_to_pascal_case(enum_name.string()), CoreConstants::is_global_constant_bitfield(i));
 				List<EnumInterface>::Element *enum_match = global_enums.find(ienum);
 				if (enum_match) {
 					enum_match->get().constants.push_back(iconstant);
@@ -5115,7 +5118,7 @@ void BindingsGenerator::_populate_global_constants() {
 		for (EnumInterface &ienum : global_enums) {
 			TypeInterface enum_itype;
 			enum_itype.is_enum = true;
-			enum_itype.name = ienum.cname.operator String();
+			enum_itype.name = ienum.cname.string();
 			enum_itype.cname = ienum.cname;
 			enum_itype.proxy_name = ienum.proxy_name;
 			TypeInterface::postsetup_enum_type(enum_itype);

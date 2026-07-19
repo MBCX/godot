@@ -38,7 +38,7 @@
 #include "scene/resources/2d/navigation_polygon.h"
 #include "servers/navigation_2d/navigation_server_2d.h"
 
-#include "thirdparty/clipper2/include/clipper2/clipper.h"
+#include <thirdparty/clipper2/include/clipper2/clipper.h>
 #endif // NAVIGATION_2D_DISABLED
 
 Callable MeshInstance2D::_navmesh_source_geometry_parsing_callback;
@@ -200,8 +200,6 @@ void MeshInstance2D::navmesh_parse_source_geometry(const Ref<NavigationPolygon> 
 	path_solution = Union(subject_paths, dummy_clip_paths, FillRule::NonZero);
 
 	//path_solution = RamerDouglasPeucker(path_solution, 0.025);
-
-	Vector<Vector<Vector2>> polypaths;
 
 	for (const PathD &scaled_path : path_solution) {
 		Vector<Vector2> shape_outline;

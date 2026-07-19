@@ -32,30 +32,33 @@
 
 #include "dir_access_jandroid.h"
 #include "display_server_android.h"
-#include "file_access_android.h"
 #include "file_access_filesystem_jandroid.h"
 #include "java_godot_io_wrapper.h"
 #include "java_godot_wrapper.h"
 #include "net_socket_android.h"
 
+#ifndef TOOLS_ENABLED
+#include "file_access_android.h"
+#endif
+
 #include "core/config/engine.h"
-#include "core/config/project_settings.h"
 #include "core/extension/gdextension_manager.h"
 #include "core/input/input.h"
 #include "core/io/xml_parser.h"
-#include "core/object/callable_mp.h"
 #include "core/os/main_loop.h"
 #include "core/os/os.h"
 #include "core/profiling/profiling.h"
 #include "drivers/unix/dir_access_unix.h"
 #include "drivers/unix/file_access_unix.h"
-#ifdef TOOLS_ENABLED
-#include "editor/editor_node.h"
-#include "editor/run/game_view_plugin.h"
-#endif
 #include "main/main.h"
 #include "scene/main/scene_tree.h"
 #include "servers/rendering/rendering_server.h"
+
+#ifdef TOOLS_ENABLED
+#include "core/object/callable_mp.h"
+#include "editor/editor_node.h"
+#include "editor/run/game_view_plugin.h"
+#endif
 
 #include <dlfcn.h>
 #include <sys/system_properties.h>
@@ -106,25 +109,27 @@ void OS_Android::initialize_core() {
 
 #ifdef TOOLS_ENABLED
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
-#else
+#else // TOOLS_ENABLED
+	FileAccess::make_default<FileAccessAndroid>(FileAccess::ACCESS_RESOURCES);
+#if defined(OVERRIDE_PATH_ENABLED)
 	if (use_apk_expansion) {
 		FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
-	} else {
-		FileAccess::make_default<FileAccessAndroid>(FileAccess::ACCESS_RESOURCES);
 	}
-#endif
+#endif // defined(OVERRIDE_PATH_ENABLED)
+#endif // TOOLS_ENABLED
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
 	FileAccess::make_default<FileAccessFilesystemJAndroid>(FileAccess::ACCESS_FILESYSTEM);
 
 #ifdef TOOLS_ENABLED
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
-#else
+#else // TOOLS_ENABLED
+	DirAccess::make_default<DirAccessJAndroid>(DirAccess::ACCESS_RESOURCES);
+#if defined(OVERRIDE_PATH_ENABLED)
 	if (use_apk_expansion) {
 		DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
-	} else {
-		DirAccess::make_default<DirAccessJAndroid>(DirAccess::ACCESS_RESOURCES);
 	}
-#endif
+#endif // defined(OVERRIDE_PATH_ENABLED)
+#endif // TOOLS_ENABLED
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_USERDATA);
 	DirAccess::make_default<DirAccessJAndroid>(DirAccess::ACCESS_FILESYSTEM);
 
@@ -480,6 +485,10 @@ String OS_Android::get_model_name() const {
 	}
 
 	return OS_Unix::get_model_name();
+}
+
+String OS_Android::get_processor_name() const {
+	return get_system_property("ro.soc.model");
 }
 
 String OS_Android::get_data_path() const {

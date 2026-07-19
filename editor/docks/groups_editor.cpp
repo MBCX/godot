@@ -69,7 +69,7 @@ static bool can_edit(Node *p_node, const String &p_group) {
 
 struct _GroupInfoComparator {
 	bool operator()(const Node::GroupInfo &p_a, const Node::GroupInfo &p_b) const {
-		return p_a.name.operator String() < p_b.name.operator String();
+		return p_a.name.string() < p_b.name.string();
 	}
 };
 
@@ -665,6 +665,7 @@ void GroupsEditor::_show_add_group_dialog() {
 	if (!add_group_dialog) {
 		add_group_dialog = memnew(ConfirmationDialog);
 		add_group_dialog->set_title(TTR("Create New Group"));
+		add_group_dialog->set_ok_button_text(TTRC("Create"));
 		add_group_dialog->connect(SceneStringName(confirmed), callable_mp(this, &GroupsEditor::_confirm_add));
 
 		VBoxContainer *vbc = memnew(VBoxContainer);
@@ -789,6 +790,7 @@ void GroupsEditor::_show_rename_group_dialog() {
 void GroupsEditor::_show_remove_group_dialog() {
 	if (!remove_group_dialog) {
 		remove_group_dialog = memnew(ConfirmationDialog);
+		remove_group_dialog->set_ok_button_text(TTRC("Delete"));
 		remove_group_dialog->connect(SceneStringName(confirmed), callable_mp(this, &GroupsEditor::_confirm_delete));
 
 		VBoxContainer *vbox = memnew(VBoxContainer);
@@ -916,7 +918,7 @@ GroupsEditor::GroupsEditor() {
 	hbc->add_child(filter);
 
 	MarginContainer *mc = memnew(MarginContainer);
-	mc->set_theme_type_variation("NoBorderHorizontalBottom");
+	mc->set_theme_type_variation("NoBorderBottomPanel");
 	mc->set_v_size_flags(SIZE_EXPAND_FILL);
 	holder->add_child(mc);
 

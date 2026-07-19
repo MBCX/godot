@@ -50,11 +50,12 @@
 #include "core/input/input.h"
 #include "core/os/main_loop.h"
 #include "core/os/os.h"
+#include "core/os/thread.h"
+#include "core/os/thread_safe.h"
 #include "core/profiling/profiling.h"
 #include "main/main.h"
-#include "servers/rendering/rendering_server.h"
-
 #include "servers/camera/camera_server.h"
+#include "servers/rendering/rendering_server.h"
 
 #ifndef XR_DISABLED
 #include "servers/xr/xr_server.h"
@@ -100,9 +101,7 @@ static void _terminate(JNIEnv *env, bool p_restart = false) {
 	// Unregister android plugins
 	unregister_plugins_singletons();
 
-	if (java_class_wrapper) {
-		memdelete(java_class_wrapper);
-	}
+	memdelete(java_class_wrapper);
 	if (input_handler) {
 		delete input_handler;
 	}
@@ -163,7 +162,7 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_setVirtualKeyboardHei
 	}
 }
 
-JNIEXPORT jboolean JNICALL Java_org_godotengine_godot_GodotLib_initialize(JNIEnv *env, jclass clazz, jobject p_godot_instance, jobject p_asset_manager, jobject p_godot_io, jobject p_net_utils, jobject p_directory_access_handler, jobject p_file_access_handler, jboolean p_use_apk_expansion) {
+JNIEXPORT jboolean JNICALL Java_org_godotengine_godot_GodotLib_initialize(JNIEnv *env, jclass clazz, jobject p_godot_native_bridge, jobject p_asset_manager, jobject p_godot_io, jobject p_net_utils, jobject p_directory_access_handler, jobject p_file_access_handler, jboolean p_use_apk_expansion) {
 	godot_init_profiler();
 
 	JavaVM *jvm;
@@ -173,7 +172,7 @@ JNIEXPORT jboolean JNICALL Java_org_godotengine_godot_GodotLib_initialize(JNIEnv
 	setup_android_class_loader();
 
 	// create our wrapper classes
-	godot_java = new GodotJavaWrapper(env, p_godot_instance);
+	godot_java = new GodotJavaWrapper(env, p_godot_native_bridge);
 	godot_io_java = new GodotIOJavaWrapper(env, p_godot_io);
 
 	FileAccessAndroid::setup(p_asset_manager);
@@ -230,6 +229,9 @@ JNIEXPORT jboolean JNICALL Java_org_godotengine_godot_GodotLib_setup(JNIEnv *env
 	if (err != OK) {
 		return false;
 	}
+
+	Thread::release_main_thread(); // setup2 will be called from another thread.
+	set_current_thread_safe_for_nodes(false);
 
 	TTS_Android::setup(p_godot_tts);
 
@@ -363,10 +365,11 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_dispatchTouchEvent(JN
 		tp.pos = Point2(p[1], p[2]);
 		tp.pressure = p[3];
 		tp.tilt = Vector2(p[4], p[5]);
+		tp.double_tap = p_double_tap;
 		points.push_back(tp);
 	}
 
-	input_handler->process_touch_event(ev, pointer, points, p_double_tap);
+	input_handler->process_touch_event(ev, pointer, points);
 }
 
 // Called on the UI thread
@@ -550,9 +553,11 @@ JNIEXPORT jobjectArray JNICALL Java_org_godotengine_godot_GodotLib_getRendererIn
 JNIEXPORT jstring JNICALL Java_org_godotengine_godot_GodotLib_getEditorSetting(JNIEnv *env, jclass clazz, jstring p_setting_key) {
 	String editor_setting_value = "";
 #ifdef TOOLS_ENABLED
-	String godot_setting_key = jstring_to_string(p_setting_key, env);
-	Variant editor_setting = EDITOR_GET(godot_setting_key);
-	editor_setting_value = (editor_setting.get_type() == Variant::NIL) ? "" : editor_setting;
+	if (EditorSettings::get_singleton() != nullptr) {
+		String godot_setting_key = jstring_to_string(p_setting_key, env);
+		Variant editor_setting = EDITOR_GET(godot_setting_key);
+		editor_setting_value = (editor_setting.get_type() == Variant::NIL) ? "" : editor_setting;
+	}
 #else
 	WARN_PRINT("Access to the Editor Settings in only available on Editor builds");
 #endif

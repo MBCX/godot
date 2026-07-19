@@ -34,11 +34,11 @@
 #include "lang_table.h"
 #include "windows_terminal_logger.h"
 #include "windows_utils.h"
+#include "winrt_utils.h"
 
 #include "core/config/engine.h"
 #include "core/debugger/engine_debugger.h"
 #include "core/debugger/script_debugger.h"
-#include "core/io/marshalls.h"
 #include "core/os/main_loop.h"
 #include "core/profiling/profiling.h"
 #include "core/version_generated.gen.h"
@@ -51,7 +51,6 @@
 #include "main/main.h"
 #include "servers/audio/audio_server.h"
 #include "servers/rendering/rendering_server.h"
-#include "servers/rendering/rendering_server_default.h"
 #include "servers/text/text_server.h"
 
 #include <avrt.h>
@@ -84,7 +83,7 @@ extern "C" {
 #endif
 
 #if defined(VULKAN_ENABLED)
-#include "rendering_context_driver_vulkan_windows.h"
+#include "drivers/vulkan/rendering_context_driver_vulkan.h"
 #endif
 #if defined(D3D12_ENABLED)
 #include "drivers/d3d12/rendering_context_driver_d3d12.h"
@@ -100,8 +99,10 @@ extern "C" {
 #endif
 
 extern "C" {
+#ifdef ENABLE_PREFER_HIGH_PERFORMANCE_GPU
 __declspec(dllexport) DWORD NvOptimusEnablement = 1;
 __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+#endif // ENABLE_PREFER_HIGH_PERFORMANCE_GPU
 __declspec(dllexport) void NoHotPatch() {} // Disable Nahimic code injection.
 }
 
@@ -204,7 +205,7 @@ bool OS_Windows::is_using_con_wrapper() const {
 	DWORD count = GetConsoleProcessList(&pids[0], 256);
 	for (DWORD i = 0; i < count; i++) {
 		HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pids[i]);
-		if (process != NULL) {
+		if (process != nullptr) {
 			WCHAR proc_name[MAX_PATH];
 			DWORD len = MAX_PATH;
 			if (QueryFullProcessImageNameW(process, 0, &proc_name[0], &len)) {
@@ -346,9 +347,7 @@ void OS_Windows::initialize() {
 }
 
 void OS_Windows::delete_main_loop() {
-	if (main_loop) {
-		memdelete(main_loop);
-	}
+	memdelete(main_loop);
 	main_loop = nullptr;
 }
 
@@ -377,9 +376,7 @@ void OS_Windows::finalize() {
 	driver_midi.close();
 #endif
 
-	if (main_loop) {
-		memdelete(main_loop);
-	}
+	memdelete(main_loop);
 
 	main_loop = nullptr;
 }
@@ -482,11 +479,10 @@ Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_ha
 	if (!FileAccess::exists(path)) {
 		//this code exists so gdextension can load .dll files from within the executable path
 		path = get_executable_path().get_base_dir().path_join(p_path.get_file());
+		ERR_FAIL_COND_V(!FileAccess::exists(path), ERR_FILE_NOT_FOUND);
 	}
 	// Path to load from may be different from original if we make copies.
 	String load_path = path;
-
-	ERR_FAIL_COND_V(!FileAccess::exists(path), ERR_FILE_NOT_FOUND);
 
 	// Here we want a copy to be loaded.
 	// This is so the original file isn't locked and can be updated by a compiler.
@@ -1947,7 +1943,7 @@ Vector<String> OS_Windows::get_system_font_path_for_text(const String &p_font_na
 
 	Vector<String> ret;
 	for (UINT32 i = 0; i < number_of_files; i++) {
-		void const *reference_key = nullptr;
+		const void *reference_key = nullptr;
 		UINT32 reference_key_size = 0;
 		ComAutoreleaseRef<IDWriteLocalFontFileLoader> loader;
 
@@ -2026,7 +2022,7 @@ String OS_Windows::get_system_font_path(const String &p_font_name, int p_weight,
 	}
 
 	for (UINT32 i = 0; i < number_of_files; i++) {
-		void const *reference_key = nullptr;
+		const void *reference_key = nullptr;
 		UINT32 reference_key_size = 0;
 		ComAutoreleaseRef<IDWriteLocalFontFileLoader> loader;
 
@@ -2122,7 +2118,7 @@ PackedByteArray OS_Windows::get_stdin_buffer(int64_t p_buffer_size) {
 
 OS_Windows::StdHandleType OS_Windows::get_stdin_type() const {
 	HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-	if (h == 0 || h == INVALID_HANDLE_VALUE) {
+	if (h == nullptr || h == INVALID_HANDLE_VALUE) {
 		return STD_HANDLE_INVALID;
 	}
 	DWORD ftype = GetFileType(h);
@@ -2153,7 +2149,7 @@ OS_Windows::StdHandleType OS_Windows::get_stdin_type() const {
 
 OS_Windows::StdHandleType OS_Windows::get_stdout_type() const {
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (h == 0 || h == INVALID_HANDLE_VALUE) {
+	if (h == nullptr || h == INVALID_HANDLE_VALUE) {
 		return STD_HANDLE_INVALID;
 	}
 	DWORD ftype = GetFileType(h);
@@ -2179,7 +2175,7 @@ OS_Windows::StdHandleType OS_Windows::get_stdout_type() const {
 
 OS_Windows::StdHandleType OS_Windows::get_stderr_type() const {
 	HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
-	if (h == 0 || h == INVALID_HANDLE_VALUE) {
+	if (h == nullptr || h == INVALID_HANDLE_VALUE) {
 		return STD_HANDLE_INVALID;
 	}
 	DWORD ftype = GetFileType(h);
@@ -2292,6 +2288,14 @@ String OS_Windows::get_locale() const {
 	}
 
 	return "en";
+}
+
+Vector<String> OS_Windows::get_preferred_locales() const {
+	Vector<String> out = WinRTUtils::get_preferred_locales();
+	if (out.is_empty()) {
+		out.push_back(get_locale());
+	}
+	return out;
 }
 
 String OS_Windows::get_model_name() const {
@@ -2510,6 +2514,19 @@ String OS_Windows::get_system_dir(SystemDir p_dir, bool p_shared_storage) const 
 
 String OS_Windows::get_user_data_dir(const String &p_user_dir) const {
 	return get_data_path().path_join(p_user_dir).replace_char('\\', '/');
+}
+
+String OS_Windows::expand_path(const String &p_path) const {
+	String path = p_path;
+
+	if (path.begins_with("~/") || path.begins_with("~\\") || path == "~") {
+		String home = get_environment("USERPROFILE");
+		if (!home.is_empty()) {
+			path = home + path.substr(1);
+		}
+	}
+
+	return path;
 }
 
 String OS_Windows::get_unique_id() const {
@@ -2749,9 +2766,7 @@ bool OS_Windows::_test_create_rendering_device_and_gl(const String &p_display_dr
 	}
 
 #ifdef GLES3_ENABLED
-	if (test_gl_manager_native) {
-		memdelete(test_gl_manager_native);
-	}
+	memdelete(test_gl_manager_native);
 #endif
 
 	DestroyWindow(hWnd);
